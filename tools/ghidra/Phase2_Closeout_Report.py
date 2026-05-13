@@ -43,6 +43,21 @@ def read_be32(mem, addr):
     )
 
 
+def read_be32_safe(mem, addr, label):
+    """Read big-endian word or print why it failed (no traceback)."""
+    if addr is None:
+        print("  (%s: null address)" % label)
+        return None
+    if not mem.contains(addr):
+        print("  (%s: not in memory — %s)" % (label, addr))
+        return None
+    try:
+        return read_be32(mem, addr)
+    except Exception as e:
+        print("  (%s: %s)" % (label, e))
+        return None
+
+
 def read_ascii(mem, addr, length):
     out = []
     for i in range(length):
@@ -54,20 +69,10 @@ def read_ascii(mem, addr, length):
     return "".join(out)
 
 
-def find_block(mem, *candidates):
-    """Return first MemoryBlock whose name matches one of candidates (case-insensitive contains)."""
-    c = [x.lower() for x in candidates]
+def get_block_exact(mem, name):
+    """Exact MemoryBlock name match (required — substring matching hits .pifrom / .pifram)."""
     for b in mem.getBlocks():
-        n = b.getName().lower()
-        for want in c:
-            if want in n or n == want.strip("*"):
-                return b
-    return None
-
-
-def find_block_by_prefix(mem, prefix):
-    for b in mem.getBlocks():
-        if b.getName().startswith(prefix):
+        if b.getName() == name:
             return b
     return None
 
@@ -101,10 +106,15 @@ def mips_hint_be32(w):
     return "opcode=%d rs=%d rt=%d imm=%d  (0x%08x)" % (op, rs, rt, simm, w)
 
 
-def make_addr(prog, offset):
-    """Resolve a physical offset in the program's default memory space (typical for ram:8020... imports)."""
-    space = prog.getAddressFactory().getDefaultAddressSpace()
-    return space.getAddress(offset)
+def vram_to_addr_in_ram(ram_block, vram):
+    """Map a KSEG0-style address into the .ram block (relative to block start)."""
+    if ram_block is None:
+        return None
+    base = ram_block.getStart()
+    delta = int(vram) - int(base.getOffset())
+    if delta < 0:
+        return None
+    return base.add(delta)
 
 
 def main():
@@ -123,43 +133,50 @@ def main():
             % (b.getName(), b.getStart(), b.getEnd(), b.isExecute(), b.isWrite())
         )
 
-    rom = find_block(mem, ".rom", "rom")
-    ram = find_block(mem, ".ram", "ram")
-    boot = find_block(mem, ".boot", "boot", "ipl")
+    # Exact names only: substring "rom" matches ".pifrom"; "ram" matches ".pifram".
+    rom = get_block_exact(mem, ".rom")
+    ram = get_block_exact(mem, ".ram")
+    boot = get_block_exact(mem, ".boot")
 
     print("\n--- Resolved blocks ---")
-    print("  .rom-like: %s" % (rom.getName() if rom else "(none)"))
-    print("  .ram-like: %s" % (ram.getName() if ram else "(none)"))
-    print("  .boot-like: %s" % (boot.getName() if boot else "(none)"))
+    print("  .rom:   %s" % (rom.getName() if rom else "(missing — add block named .rom)"))
+    print("  .ram:   %s" % (ram.getName() if ram else "(missing)"))
+    print("  .boot:  %s" % (boot.getName() if boot else "(missing)"))
 
     if rom is None:
-        print("\nERROR: No ROM block found (tried names containing .rom / rom).")
-        print("Rename or extend this script to match your memory block names.")
+        print("\nERROR: No MemoryBlock named exactly `.rom`. Edit get_block_exact / block names.")
         return
 
     rom_base = rom.getStart()
     print("\n--- ROM header (big-endian dwords at file offset 0x0) ---")
-    magic = read_be32(mem, rom_base)
-    clock = read_be32(mem, rom_base.add(4))
-    load_addr = read_be32(mem, rom_base.add(8))
-    release = read_be32(mem, rom_base.add(0x0C))
-    crc1 = read_be32(mem, rom_base.add(0x10))
-    crc2 = read_be32(mem, rom_base.add(0x14))
+    magic = read_be32_safe(mem, rom_base, "header+0x0")
+    clock = read_be32_safe(mem, rom_base.add(4), "header+0x4")
+    load_addr = read_be32_safe(mem, rom_base.add(8), "header+0x8")
+    release = read_be32_safe(mem, rom_base.add(0x0C), "header+0xC")
+    crc1 = read_be32_safe(mem, rom_base.add(0x10), "header+0x10")
+    crc2 = read_be32_safe(mem, rom_base.add(0x14), "header+0x14")
+    if magic is None:
+        print("  ERROR: could not read ROM header (wrong .rom block?)")
+        return
     print("  Magic:          0x%08X  (expect 0x80371240 for .z64)" % magic)
     print("  Clock rate:     0x%08X" % clock)
     print("  Load_Address:   0x%08X  (repo expect 0x%08X)" % (load_addr, EXP_LOAD))
     print("  Release_Offset: 0x%08X  (reconcile with ROM docs / splat entry ROM 0x1000)" % release)
     print("  CRC1 / CRC2:    0x%08X / 0x%08X" % (crc1, crc2))
-    title = read_ascii(mem, rom_base.add(0x20), 20)
+    t0 = rom_base.add(0x20)
+    if mem.contains(t0) and mem.contains(t0.add(19)):
+        title = read_ascii(mem, t0, 20)
+    else:
+        title = "(unreadable range)"
     print('  Title@0x20:     "%s"' % title)
 
-    if load_addr != EXP_LOAD:
+    if load_addr is not None and load_addr != EXP_LOAD:
         print("  WARNING: Load_Address does not match expected entry VRAM.")
 
     print("\n--- ROM offset 0x%x (splat first `data` subsegment) ---" % ROM_OFF_DATA)
     a = addr_in_block(rom, ROM_OFF_DATA)
-    if a is not None:
-        w0 = read_be32(mem, a)
+    w0 = read_be32_safe(mem, a, "ROM+0x%X" % ROM_OFF_DATA)
+    if w0 is not None:
         print("  First word: 0x%08X  %s" % (w0, mips_hint_be32(w0)))
         ins = listing.getInstructionAt(a)
         print("  Ghidra code unit at start: %s" % (ins if ins else "(undefined — not disassembled as code)"))
@@ -169,18 +186,22 @@ def main():
     if a is not None:
         for i in range(4):
             addr = a.add(i * 4)
-            w = read_be32(mem, addr)
             off = ROM_OFF_TAIL + i * 4
-            print("  ROM+0x%X  BE32=0x%08X  %s" % (off, w, mips_hint_be32(w)))
+            w = read_be32_safe(mem, addr, "ROM+0x%X" % off)
+            if w is not None:
+                print("  ROM+0x%X  BE32=0x%08X  %s" % (off, w, mips_hint_be32(w)))
         ins = listing.getInstructionAt(a)
         print("  Ghidra code unit at ROM+0x%X: %s" % (ROM_OFF_TAIL, ins if ins else "(undefined)"))
 
-    print("\n--- RAM symbols (fixed VRAM offsets in default memory space) ---")
+    print("\n--- RAM symbols (via `.ram` block, not default address space) ---")
 
     def check_ram_vram(offset, label_hint):
-        addr = make_addr(prog, offset)
+        addr = vram_to_addr_in_ram(ram, offset)
         if addr is None or not mem.contains(addr):
-            print("  %s @ 0x%X: address not in memory" % (label_hint, offset))
+            print(
+                "  %s @ 0x%X: not in `.ram` block (have you got a block named `.ram`?)"
+                % (label_hint, offset)
+            )
             return
         fn = listing.getFunctionContaining(addr)
         data = listing.getDataAt(addr)
@@ -204,8 +225,8 @@ def main():
     print("  ROM Load_Address: 0x%08X" % load_addr)
     print("  Release_Offset:   0x%08X  (note meaning after checking ROM wiki)")
     tail_addr = addr_in_block(rom, ROM_OFF_TAIL)
-    if tail_addr is not None:
-        tw = read_be32(mem, tail_addr)
+    tw = read_be32_safe(mem, tail_addr, "ROM+0x%X tail" % ROM_OFF_TAIL)
+    if tw is not None:
         print(
             "  ROM+0x%X first word: 0x%08X — %s"
             % (ROM_OFF_TAIL, tw, mips_hint_be32(tw))

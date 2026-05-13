@@ -16,6 +16,9 @@ starter**.
 5. After Ghidra opens, **Window → Script Manager** → add this repo folder under script paths →
    run **Phase2_Closeout_Report.py**. Output appears in the **Script** console.
 
+**If you copied the script to `~/ghidra_scripts/NewScript3.py`:** replace it from
+`AeroAssault64/tools/ghidra/Phase2_Closeout_Report.py` after updates — old copies will miss fixes.
+
 **Optional:** If Script Manager still offers **Jython** and you prefer the classic launcher,
 edit the script’s first runtime line to **`# @runtime Jython`** (see comment in the `.py` file)
 and start Ghidra with **`ghidraRun.bat`** instead. Use only one `@runtime` line.
