@@ -90,6 +90,25 @@ Do this **before** changing `config/splat.yaml` for “final” layout or invest
 | Prior notes (re-verify) | VRAM **0x80200050** — entry / `ramMain`; **`g_BuildString`** VRAM **0x802F5E58**, ROM **0x00F6E08** (`Docs/SystemPrompt.md`) |
 | splat draft (reconcile) | `config/splat.yaml` — `ipl3` @ ROM **0x40** (`bin`); **`entry`** ROM **0x1000** VRAM **0x80200050** (`hasm`); **`main`** from ROM **0x1050**; tail `bin` from **0x57D20**; last line **`[0x800000]`** (full ROM tail still “unknown” to splat until segments are filled) |
 
+### ROM ↔ splat map (use while in Ghidra)
+
+These offsets come from the **committed** `config/splat.yaml` (splat **0.40** layout). If your editor shows an older hand-written `boot` / `main` @ `0x001FF000` tree, **refresh from disk** — generated `build/aerofighters_assault.ld` and `asm/*.s` must agree with this file.
+
+| Segment (splat `name`) | ROM start | VRAM (from yaml / asm) | Notes |
+|------------------------|-----------|-------------------------|--------|
+| `header` | **0x0** | (header blob) | 0x40-byte cart header |
+| `ipl3` | **0x40** | *(bin only in split — no asm)* | IPL3 cartridge blob; decide in Ghidra how you want to map or skip it |
+| `entry` | **0x1000** | **0x80200050** | `hasm` → see `asm/1000.s` (`entrypoint`) |
+| `main` (`.text`) | **0x1050** | **0x802000A0** (first insn after entry chunk) | `follows_vram: entry` |
+| `main` (`data`) | **0x4C050** | continues after `.text` in VRAM | Check `asm/data/4C050.data.s` |
+| `main` (`bss`) | *(none in ROM)* | **0x80256D70** per yaml | BSS size **0x306C0** |
+| trailing `bin` | **0x57D20** | follows `main` VRAM | Unknown tail until you label it |
+| end marker | **0x800000** | — | Full ROM size |
+
+**Reading splat asm for cross-check:** In `asm/1000.s`, each disassembled line uses the form `/* <ROM> <VRAM> <word> */` — e.g. `/* 1000 80200050 3C088025 */` means ROM **0x1000**, VRAM **0x80200050**. Use that to sanity-check that your Ghidra image’s ROM offset ↔ address mapping matches splat before you trust auto-analysis.
+
+**Symbols:** `config/symbol_addrs.txt` lists `entrypoint`, `main`, and `g_BuildString` (see [splat wiki — Adding symbols](https://github.com/ethteck/splat/wiki/Adding-Symbols)). Rename in Ghidra to match whatever you keep in that file.
+
 ### Ghidra session checklist
 
 Work in a **non-shared** Ghidra project so imports and memory blocks stay under your control.
