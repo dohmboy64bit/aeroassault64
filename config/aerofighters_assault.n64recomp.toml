@@ -1,0 +1,88 @@
+# N64Recomp static recompilation input — Aero Fighters Assault (USA) smoke ELF.
+#
+# Field names and [input] layout match N64Recomp `src/config.cpp` at upstream commit
+# 81213c1831fab2521a6a5459c67b63437d67e253 (see `tools/README.txt`). Paths below are
+# relative to this file's directory (`config/`), same as `concat_if_not_empty(basedir, ...)`
+# in that parser.
+#
+# Entry VRAM matches splat / linker (`Makefile` `-e entrypoint`) and `config/symbol_addrs.txt`
+# (`entrypoint = 0x80200050`).
+#
+# Do not set `symbols_file_path` together with `elf_path` — `src/main.cpp` rejects both.
+
+[input]
+entrypoint = 0x80200050
+elf_path = "../build/aerofighters_assault.elf"
+output_func_path = "../RecompiledFuncs"
+
+# `asm/4BE20.s`: `func_8024AE70` is an 8-byte stub — `j func_84001064` (KSEG1-style
+# `0x8400…` target). N64Recomp reports "Unhandled branch … to 0x84001064" for that
+# opcode (`src/main.cpp` applies `[[patches.instruction]]` via `instruction_patches`).
+# Replace with `jr $ra` / `nop` so static recomp does not follow hardware bootstrap
+# control flow the runtime port will replace anyway.
+
+[patches]
+
+stubs = [
+    # `asm/4BE20.s` — `func_8024AE78`: handwritten COP0 / `jal` / `j` into `0x8400…`
+    # bootstrap. N64Recomp `recompilation.cpp` skips body when `func.stubbed`
+    # (`stubs` list in `src/main.cpp`); `analyze_function` hits "Unhandled cop0 register in mtc0: 0" otherwise.
+    "func_8024AE78",
+    # `asm/3E750.s` — `func_8023D7F0`: D-cache index-invalidate loop (`cache 0x01, …`).
+    # N64Recomp `recompilation.cpp` / `process_instruction`: "Unhandled instruction: cache".
+    "func_8023D7F0",
+    # `asm/3FFD0.s` — `func_8023F020`: cache ops 0x15 / 0x11 / 0x01.
+    "func_8023F020",
+    # `asm/3DDC0.s` — `func_8023CE80`: cache ops 0x19 / 0x01.
+    "func_8023CE80",
+    # `asm/49090.s` — `func_802480E0`: cache ops 0x10 / 0x00.
+    "func_802480E0",
+    # Jump-table analysis failure at 0x80259FE8 / table 0x80334080 (`Failed to analyze func_80265C50`).
+    "func_80265C50",
+    # Remaining names: N64Recomp `src/analysis.cpp` could not size jump tables (entries point outside
+    # the owning `Function` span). Stubbed so `analyze_function` / `recompile_function` complete;
+    # regenerate this list with `python tools/n64recomp_stub_until_green.py` after ELF/TOML churn.
+    "func_802688A8",
+    "func_80272F50",
+    "func_8025CA1C",
+    "func_80258A68",
+    "func_80278184",
+    "func_8024A740",
+    "func_8024AF40",
+    "func_8024AF48",
+    "func_80238B80",
+    "func_80248160",
+    "func_80241D14",
+    "func_8025F558",
+    "func_8025C49C",
+    "func_80234DE0",
+    "func_8027AFA8",
+    "func_8025DCF0",
+    "func_80258D0C",
+    "func_80242240",
+    "func_80275A1C",
+    "func_8026D848",
+    "func_80241F54",
+    "func_80258764",
+    "func_80263C34",
+    "func_802417E0",
+    "func_80267EF4",
+    "func_8025D8A8",
+    "func_80278588",
+    "func_80278004",
+    "func_80277CD0",
+    "func_80265694",
+    "func_8027526C",
+    "func_8025C6F4",
+    "func_8026C1E4",
+]
+
+[[patches.instruction]]
+func = "func_8024AE70"
+vram = 0x8024AE70
+value = 0x03E00008 # jr $ra
+
+[[patches.instruction]]
+func = "func_8024AE70"
+vram = 0x8024AE74
+value = 0x00000000 # nop (was delay slot: addi $at, $zero, 0xFC0)

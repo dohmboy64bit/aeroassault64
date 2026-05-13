@@ -36,6 +36,14 @@ venv/
 __pycache__/
 *.pyc
 
+# N64Recomp output (regenerate: `tools/N64Recomp.exe` + `config/aerofighters_assault.n64recomp.toml`; see `tools/README.txt`)
+RecompiledFuncs/*.c
+RecompiledFuncs/*.h
+RecompiledFuncs/*.cpp
+RecompiledFuncs/*.inl
+!RecompiledFuncs/README.txt
+!RecompiledFuncs/.gitkeep
+
 # Generated asm (when splat emits into repo — adjust path if you use asm/ at root)
 asm/
 

@@ -9,8 +9,8 @@ This file tracks **phase order** from `Docs/SystemPrompt.md`. Do not skip phases
 | 1 | Environment setup | **Complete** |
 | 2 | ROM + Ghidra | **Complete** |
 | 3 | `splat.yaml` / split | **Complete** — **`rodata`** subdivided **0x52B90…0x57A60** per **splat 0.40.0** split stdout (extra nops @ VRAM **0x80251BE0**); **`asm`** splits ROM **`< 0x4C050`**; **`post_data`** single **`asm`** from **`0x57D20`** (tail splits still rejected: VRAM order vs **`bss`**); **`splat split`** OK; **`post_data`** vs **`800000.bss`** handled via **`tools/dedupe_post_data_bss.py`** + **`LINK_STRICT`** (see **What to remember**). *Optional follow-up:* Ghidra xrefs to validate **`rodata`** boundaries (**`Docs/Workflow.md`** “Still to do”). |
-| 4 | ELF (WSL / splat) | **In progress** — smoke **`make` / `make verify`** done; formal Phase 4 checklist and **`make strict-verify`** in **`Docs/Workflow.md`** § Phase 4. Next gate: **N64Recomp** (Phase 5) consumes **`build/aerofighters_assault.elf`** per **`config/splat.yaml`** **`elf_path`**. |
-| 5 | N64Recomp | Not started |
+| 4 | ELF (WSL / splat) | **In progress** — smoke **`make` / `make verify`** done; formal Phase 4 checklist and **`make strict-verify`** in **`Docs/Workflow.md`** § Phase 4. **Phase 5** reads the same ELF via **`config/aerofighters_assault.n64recomp.toml`**. |
+| 5 | N64Recomp | **Smoke-complete** — **`config/aerofighters_assault.n64recomp.toml`** drives **`tools/N64Recomp.exe`** to exit **0** (outputs under **`RecompiledFuncs/`**, gitignored except **`README.txt`**). Hand-tuned **`[[patches.instruction]]`** + **`stubs`** (COP0 / **`cache`** / jump-table limits per N64Recomp **`src/main.cpp`**, **`recompilation.cpp`**, **`analysis.cpp`**); extend with **`python tools/n64recomp_stub_until_green.py`** after **`splat split`**. |
 | 6 | Engine + patches | Not started |
 | 7 | CMake → Windows PE | Not started |
 | 8 | Test / stabilize | Not started |
@@ -199,7 +199,7 @@ Work in a **non-shared** Ghidra project so imports and memory blocks stay under 
 - [x] **`tools/dedupe_post_data_bss.py`** + **`make dedupe-bss`**; **`LINK_STRICT=1`** link verified (**2026-05-13**).
 - [ ] Run **`make strict-verify`** after each **`splat split`** before trusting multiply-defined cleanliness (regenerates **`800000.bss.s`** — see **What to remember**).
 - [ ] **ELF sanity:** confirm **`Entry point address`** matches splat entry (**`0x80200050`**) and **`Machine: MIPS R3000`** / **o32** flags match your toolchain; optional **`readelf -S`** / **`nm`** spot-checks vs Ghidra segment notes.
-- [ ] **Handoff to Phase 5:** **`config/splat.yaml`** **`elf_path: build/aerofighters_assault.elf`** — add game **`*.toml`** for **`tools/N64Recomp.exe`** per [N64Recomp](https://github.com/Mr-Wiseguy/N64Recomp) docs; output only under **`RecompiledFuncs/`**.
+- [x] **Handoff to Phase 5:** **`config/splat.yaml`** **`elf_path: build/aerofighters_assault.elf`** — game TOML is **`config/aerofighters_assault.n64recomp.toml`** for **`tools/N64Recomp.exe`** (see **`tools/README.txt`** Phase 5 and N64Recomp **`src/config.cpp`** @ commit pinned in **`tools/README.txt`**); output only under **`RecompiledFuncs/`**.
 
 ### Phase 4 exit criteria
 
@@ -207,7 +207,32 @@ Phase **4** is **done** when: strict path is documented and repeatable (**`make 
 
 ---
 
-## Later phases (Phase 5+)
+## Phase 5 — N64Recomp (Windows `tools/N64Recomp.exe`)
 
-- **Phase 5:** N64Recomp `.toml`; output under `RecompiledFuncs/` only.
+**Goal:** drive the vendored CLI with a checked-in TOML so recompiled sources are emitted only under **`RecompiledFuncs/`** ([N64Recomp](https://github.com/Mr-Wiseguy/N64Recomp) README; this repo pins the binary’s source commit in **`tools/README.txt`**).
+
+### Prerequisites
+
+- **`build/aerofighters_assault.elf`** from Phase 4 (**`make strict-verify`** recommended after **`splat split`** + **`make dedupe-bss`**).
+- **`tools/N64Recomp.exe`** present (tracked).
+
+### Commands
+
+| Step | Where | Command |
+|------|--------|---------|
+| Run recompiler | Repo root, **PowerShell** | **`.\tools\N64Recomp.exe .\config\aerofighters_assault.n64recomp.toml`** |
+| Same (optional) | WSL after **`$(ELF)`** exists | **`make n64recomp`** — invokes **`tools/N64Recomp.exe`** with **`config/aerofighters_assault.n64recomp.toml`** (Windows interop; skip if your WSL cannot run PE) |
+| Optional context dump | Same | Append **`--dump-context`** (writes **`dump.toml`** / **`data_dump.toml`** in the cwd per **`src/main.cpp`**) |
+
+**Config:** **`config/aerofighters_assault.n64recomp.toml`** — **`[input]`** keys match N64Recomp **`src/config.cpp`** (paths relative to the TOML file). **`entrypoint = 0x80200050`** matches **`config/symbol_addrs.txt`** and **`Makefile`** **`-e entrypoint`**.
+
+### Phase 5 checklist
+
+- [x] Committed TOML with **`elf_path`** + **`output_func_path`** + **`entrypoint`** (ELF-only mode; no **`symbols_file_path`** — mutually exclusive per **`src/main.cpp`**).
+- [x] First successful static recomp (**`N64Recomp.exe`** exit **0**, **2026-05-13**). **`[[patches.instruction]]`** on **`func_8024AE70`** replaces **`j func_84001064`** (**`asm/4BE20.s`**) with **`jr $ra` / `nop`** — same bytes as Kirby-style patches in **`Docs/RepoInjests/`**. **`stubs`** cover **`func_8024AE78`** (COP0 bootstrap per **`asm/4BE20.s`**), every splat **`cache`** helper in **`asm/3E750.s`**, **`asm/3FFD0.s`**, **`asm/3DDC0.s`**, **`asm/49090.s`**, plus functions where **`src/analysis.cpp`** could not size a jump table; re-run **`python tools/n64recomp_stub_until_green.py`** after large **`asm/`** or ELF changes to extend the list.
+
+---
+
+## Later phases (Phase 6+)
+
 - **Phase 6–8:** `lib/` engine, `src/`, `patches/`, CMake PE, VS debugger — see `Docs/Debugging.md`.

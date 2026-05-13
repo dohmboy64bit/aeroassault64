@@ -2,7 +2,7 @@
 # Prerequisite: from repo root run `python3 -m splat split config/splat.yaml` so asm/, assets/ipl3.bin, and build/*.ld exist.
 # See Docs/Workflow.md and https://github.com/ethteck/splat/wiki/General-Workflow
 
-.PHONY: all split clean check-split verify dedupe-bss strict-verify
+.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp
 
 .DEFAULT_GOAL := all
 
@@ -54,6 +54,14 @@ dedupe-bss: build/asm/post_data.o
 # Phase 4: dedupe `800000.bss.s` then link with single-definition rules (see Docs/Workflow.md § Phase 4).
 strict-verify: dedupe-bss
 	$(MAKE) LINK_STRICT=1 verify
+
+# Phase 5 (Windows PE): requires `tools/N64Recomp.exe` and a built `$(ELF)`.
+# From WSL this often works via Windows interop; otherwise run from PowerShell (see tools/README.txt).
+N64RECOMP_EXE ?= tools/N64Recomp.exe
+N64RECOMP_CFG ?= config/aerofighters_assault.n64recomp.toml
+n64recomp: $(ELF)
+	@test -f $(N64RECOMP_EXE) || (echo "Missing $(N64RECOMP_EXE)"; exit 1)
+	$(N64RECOMP_EXE) $(N64RECOMP_CFG)
 
 check-split:
 	@test -f $(LDSCRIPT) || (echo "Missing $(LDSCRIPT). Run: $(SPLAT) split $(SPLIT_CFG)"; exit 1)

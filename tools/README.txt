@@ -30,3 +30,21 @@ If `N64Recomp-src` cannot be deleted (file in use), close IDEs/indexers touching
 Ghidra: see `tools/ghidra/README.txt` and `Phase2_Closeout_Report.py` for a Phase 2 ROM/RAM report script.
 
 Zelda64Recomp also documents in-tree builds in Docs/RepoInjests/Zelda64/zelda64recomp-zelda64recomp-8a5edab282632443.txt.
+
+---
+
+Phase 5 (N64Recomp, Windows)
+
+Prerequisite: WSL (or Linux) **`make strict-verify`** (or at least **`make`**) so **`build/aerofighters_assault.elf`** exists — same artifact as **`config/splat.yaml`** **`elf_path`**.
+
+From repo root in **PowerShell** (first argument is the TOML path; there is no `--help` mode):
+
+  .\tools\N64Recomp.exe .\config\aerofighters_assault.n64recomp.toml
+
+Optional context dump (supported in **`src/main.cpp`** for this tree): append **`--dump-context`** to emit **`dump.toml`** / **`data_dump.toml`** under the current working directory.
+
+**Patches in `config/aerofighters_assault.n64recomp.toml`:** **`[[patches.instruction]]`** turns **`func_8024AE70`**’s **`j func_84001064`** into **`jr $ra` / `nop`** (see **`asm/4BE20.s`** — N64Recomp **`recompilation.cpp`** cannot follow that **`0x8400…`** branch). **`[patches]` `stubs`** skip bodies for handwritten COP0 / **`cache`** routines (**`asm/4BE20.s`**, **`asm/3E750.s`**, **`asm/3FFD0.s`**, **`asm/3DDC0.s`**, **`asm/49090.s`**) and for functions where **`src/analysis.cpp`** fails jump-table sizing (`Failed to determine size of jump table`).
+
+**Regenerate stub list after big `splat split` / ELF changes:** `python tools/n64recomp_stub_until_green.py` (appends **`func_*`** names to **`stubs`** until **`N64Recomp.exe`** exits **0**).
+
+Generated C/C++ must land only under **`RecompiledFuncs/`** (see **`RecompiledFuncs/README.txt`**; large **`funcs_*.c`** / headers are **gitignored** — regenerate locally). Schema reference: N64Recomp **`src/config.cpp`** `[input]` keys; game-style examples live under **`Docs/RepoInjests/`** (e.g. Kirby **`NK4E.toml`** `[input]` block in **`kirby64ret-kirby64recomp-8a5edab282632443.txt`**).
