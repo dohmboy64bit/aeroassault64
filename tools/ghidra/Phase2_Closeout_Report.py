@@ -2,6 +2,16 @@
 # Ghidra script: ROM/RAM checks to finish Phase 2 (AeroAssault64).
 # Run from Script Manager with the AFA USA program open.
 #
+# Ghidra 12+: default Python is PyGhidra (CPython). You MUST start Ghidra with
+#   support/pyghidraRun.bat (Windows) or support/pyghidraRun (Linux/macOS)
+#   — not ghidraRun.bat — or Script Manager will say Ghidra was not started with PyGhidra.
+# See: GhidraDocs/GettingStarted.md "PyGhidra Mode" (NSA Ghidra repo).
+#
+# If your install still offers Jython in Script Manager, you may instead use:
+#   # @runtime Jython
+# and launch Ghidra the normal way (then fix any Python 2 vs 3 syntax if needed).
+#
+#@runtime PyGhidra
 #@category AeroAssault64
 #@name Phase2_Closeout_Report
 #@description Report ROM header, key offsets, and memory blocks for Docs/Workflow.md
