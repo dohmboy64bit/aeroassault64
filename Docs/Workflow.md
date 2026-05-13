@@ -117,7 +117,7 @@ Work in a **non-shared** Ghidra project so imports and memory blocks stay under 
 2. **Loader / image base:** use whatever N64/ND loader or workflow you already trust for Paradigm-era games; if unsure, stop and pick a loader with the project owner (`Docs/SystemPrompt.md` Ghidra rule) — do not assume a default Ghidra import is correct for this ROM.
 3. **Sanity — entry:** At VRAM **0x80200050**, confirm code looks like a real entry (not obvious garbage). Label **`entrypoint`** (or your chosen name) and note ROM offset Ghidra shows for that address.
 4. **Sanity — build string:** Confirm **`g_BuildString`** (or equivalent) at VRAM **0x802F5E58** / ROM **0x00F6E08** reads as a plausible build/version string; if it does not, record what *is* there — the old note may be wrong.
-5. **IPL3 / boot (ROM 0x40):** Decide what lives in **0x40–0xFFF** (before `entry` at **0x1000** in current splat): raw IPL3 only vs mixed code; whether splat’s **`ipl3` `bin`** segment is correct or should become **`code`/`asm`** with a chosen VRAM (owner decision).
+5. **IPL3 / boot (ROM 0x40):** Decide what lives in **0x40–0xFFF** (before `entry` at **0x1000** in current splat): raw IPL3 only vs mixed code; whether splat’s **`ipl3` `bin`** segment is correct or should become **`code`/`asm`** with a chosen VRAM (owner decision). **Update (user Ghidra):** cart IPL disassembles as **`bootMain`** in **`ram:a4000040`–`ram:a4000fff`** — that range is **RSP DMEM** on real hardware (**0xA4000000**–**0xA4000FFF**; see [N64brew — memory map](https://n64brew.dev/wiki/Memory_map)). It is **not** the same address space as main game (**0x80000000** / **0x8020…**). Keeping splat’s **`ipl3` `type: bin`** for ROM **0x40** is still appropriate for a **game-only** ELF/recomp pipeline unless you explicitly want IPL3 emitted as asm in another memory model.
 6. **Main code region:** Bound the bulk of **.text** (start/end VRAM and ROM). Compare to splat’s **`main`** subsegments (asm / data / bss split at **0x4C050** etc.); note where **.rodata** and **.bss** really begin if different from splat’s first-pass hints.
 7. **Tail of ROM:** From the last defined segment to **0x800000** — what is it (more code, overlays, assets, padding)? This drives the final **`bin`** / named segments vs one big unknown.
 8. **Write-down:** Fill the table below in this file (or paste into chat / issue) so Phase 3 edits to `config/splat.yaml` are traceable.
@@ -130,11 +130,11 @@ Work in a **non-shared** Ghidra project so imports and memory blocks stay under 
 |----------|----------------------------------|
 | Confirmed entry / init address | *(pending — next Ghidra pass)* |
 | `g_BuildString` (or correction) | **VRAM `802f5e58`:** `ds "Aero Fighters Assault v0.93 built on %s..."` — confirms prior **`g_BuildString`** @ **0x802F5E58** in `config/symbol_addrs.txt` / `Docs/SystemPrompt.md`. **Also listed @ `b00f6e08`** in Ghidra (same string); treat as ROM/file-backed view of the same data — cross-check against documented ROM **0x00F6E08** and your loader’s block naming. |
-| IPL3 region ROM **0x40**–**0xFFF** description | |
+| IPL3 region ROM **0x40**–**0xFFF** description | **Ghidra `.boot`:** `bootMain()` at **`a4000040`**–**`a4000fff`** (block comment *ROM bootloader*). Opcodes are real MIPS: **COP0** (`mtc0`), **RI/MI/RDRAM** MMIO (`0xA3F0…`, `0xA3F8…`), stack in DMEM, **`jal`** to helpers, loops with **`cache`**, ends **`jr t4 => TLB_REFILL`**. That matches **IPL3 / PIF bootstrap** running in **SP DMEM** (**`0xA4000000`** region), not KSEG0 game RAM. **Cart ROM `0x40`–`0xFFF`** is this blob; splat **`ipl3` `bin`** is still the right shape for splitting **game** code at **`0x1000`**. |
 | Main `.text` ROM/VRAM range | |
 | `.data` / `.rodata` / `.bss` boundaries (best effort) | |
 | ROM **0x57D20**+ until **0x800000** | |
-| Disagreements vs current `config/splat.yaml` | |
+| Disagreements vs current `config/splat.yaml` | **None for IPL3:** `ipl3` as **`bin`** @ **0x40** remains consistent with “don’t fold IPL into main `0x8020…` VRAM” unless you later choose a multi–load address model. |
 
 ### Phase 2 exit
 
