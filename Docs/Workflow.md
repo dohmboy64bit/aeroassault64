@@ -31,7 +31,7 @@ Complete these on your machine; check boxes as you go. **Do not invent tool vers
 - **ROM on disk:** `roms/afa.n64.us.z64` present; SHA1 **6742F67D7D2639072E186D240237BE1C662CB25A** matches `config/splat.yaml`.
 - **splat split smoke test (2026-05-13):** from repo root in WSL, `python3 -m splat split config/splat.yaml` completed (emits `asm/`, `build/`, `assets/*.bin`, `include/` — see `.gitignore` for what stays out of git).
 - **LLVM/Clang (Windows):** `winget` package **LLVM.LLVM** is installed; **`C:\Program Files\LLVM\bin\clang.exe`** reports **clang version 22.1.5** (target **x86_64-pc-windows-msvc**). Add that directory to **PATH** (user or system) if a new PowerShell session does not resolve `clang`.
-- **MIPS Binutils (WSL):** Ubuntu package **`binutils-mips-linux-gnu`** — provides **`mips-linux-gnu-as`** and **`mips-linux-gnu-ld`** (GNU Binutils **2.45.90** on this host). Install or refresh with: `sudo apt-get install -y binutils-mips-linux-gnu`. These are what you use to **assemble** splat’s `.s` output and **link** it with splat’s generated linker script into an **ELF** (see [splat General Workflow](https://github.com/ethteck/splat/wiki/General-Workflow), which references **`mips-linux-gnu-as`** when discussing o32 float register aliases in `macro.inc`).
+- **N64Recomp / RSPRecomp (Windows):** `tools/N64Recomp.exe` and `tools/RSPRecomp.exe` built from [Mr-Wiseguy/N64Recomp](https://github.com/Mr-Wiseguy/N64Recomp) @ **81213c1831fab2521a6a5459c67b63437d67e253** (MSVC Release). Run `.\tools\N64Recomp.exe` from PowerShell with a `.toml` per upstream docs.
 
 ### Shared reference docs (read early)
 
@@ -43,7 +43,7 @@ Complete these on your machine; check boxes as you go. **Do not invent tool vers
 - [x] Install **Visual Studio** (Desktop development with C++) for MSVC and the debugger used on the final PE. *(VS 2022 Community + VC tools detected.)*
 - [x] Install **CMake** (3.20+ unless engine docs say otherwise). *(4.2.1 on PATH.)*
 - [x] Optional: **LLVM/Clang** for Windows if you plan to match a Clang-based engine workflow. *(**LLVM.LLVM** via winget; `C:\Program Files\LLVM\bin\clang.exe` **22.1.5** — ensure that `bin` dir is on PATH if `clang` is not found.)*
-- [x] Obtain **N64Recomp** for this project (release or build); place the binary under `tools/` or add it to `PATH`, and record the exact path and version in this file when known. *(**Phase 1:** location and upstream are documented in `tools/README.txt` — see [Mr-Wiseguy/N64Recomp](https://github.com/Mr-Wiseguy/N64Recomp). **Obtain the built `N64Recomp` executable before Phase 5** when you run the recompiler.)*
+- [x] Obtain **N64Recomp** for this project (release or build); place the binary under `tools/` or add it to `PATH`, and record the exact path and version in this file when known. *(**tools/N64Recomp.exe** + **tools/RSPRecomp.exe**; built from N64Recomp @ `81213c1831fab2521a6a5459c67b63437d67e253` — see host log and `tools/README.txt`.)*
 - [ ] Clone or submodule **Zelda64Recomp** (or chosen engine) into `lib/` when you are ready — not blocked on ROM, but blocked on picking upstream revision. *(See `lib/README.txt` for the submodule command. Deferred to Phase 6 — not required to close Phase 1.)*
 
 ### WSL (splat / MIPS / ELF)
@@ -72,7 +72,7 @@ Complete these on your machine; check boxes as you go. **Do not invent tool vers
 ### Phase 1 exit criteria
 
 - **Phase 1 is closed when:** VS + CMake + Clang (optional) on Windows; WSL + Python + **splat split** verified; ROM + SHA1; **MIPS binutils** (`mips-linux-gnu-as` / `mips-linux-gnu-ld`) for future asm/ELF work; and **where N64Recomp will come from** is documented (`tools/README.txt`). **MIPS GCC** is optional and was **waived** for this host (Ubuntu 26.04 has no `gcc-mips-linux-gnu`; binutils-only is enough until you compile C for MIPS).
-- **Before Phase 5:** place the **`N64Recomp`** (and if needed **`RSPRecomp`**) executable(s) under `tools/` or on `PATH` and record versions here.
+- **Before Phase 5:** use **`tools/N64Recomp.exe`** (and **`tools/RSPRecomp.exe`** when RSP recompilation is needed) with your game `.toml`; refresh binaries if you bump N64Recomp revision.
 - **Before Phase 6:** add engine submodule under `lib/` per `lib/README.txt` when you pick a revision.
 
 ---

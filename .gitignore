@@ -27,6 +27,9 @@ CMakeCache.txt
 .DS_Store
 Thumbs.db
 
+# Local N64Recomp clone used only for one-off builds (do not commit)
+tools/N64Recomp-src/
+
 # Python / splat
 .venv/
 venv/
