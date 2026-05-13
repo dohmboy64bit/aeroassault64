@@ -87,7 +87,7 @@ Keep `Docs/` current as the project grows: at minimum **`Workflow.md`**, **`Arch
 
 - **Game:** Aero Fighters Assault (USA)
 - **ROM path (local, gitignored):** `roms/afa.n64.us.z64`
-- **Active phase focus:** Phase 1 — environment setup (see `Docs/Workflow.md`). Phase 2 ROM/`splat.yaml` notes remain below for when Phase 1 is done.
+- **Active phase focus:** Phase 2 — ROM + Ghidra alignment (see `Docs/Workflow.md`). `config/splat.yaml` exists and a first `splat split` has been run; refine segments with owner-reviewed Ghidra maps.
 
 ---
 

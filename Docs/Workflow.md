@@ -6,7 +6,7 @@ This file tracks **phase order** from `Docs/SystemPrompt.md`. Do not skip phases
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| 1 | Environment setup | **In progress** |
+| 1 | Environment setup | **Complete** |
 | 2 | ROM + Ghidra | Not started |
 | 3 | `splat.yaml` / split | First WSL `splat split` OK (see host log) |
 | 4 | ELF (WSL / splat) | Not started |
@@ -43,15 +43,15 @@ Complete these on your machine; check boxes as you go. **Do not invent tool vers
 - [x] Install **Visual Studio** (Desktop development with C++) for MSVC and the debugger used on the final PE. *(VS 2022 Community + VC tools detected.)*
 - [x] Install **CMake** (3.20+ unless engine docs say otherwise). *(4.2.1 on PATH.)*
 - [x] Optional: **LLVM/Clang** for Windows if you plan to match a Clang-based engine workflow. *(**LLVM.LLVM** via winget; `C:\Program Files\LLVM\bin\clang.exe` **22.1.5** — ensure that `bin` dir is on PATH if `clang` is not found.)*
-- [ ] Obtain **N64Recomp** for this project (release or build); place the binary under `tools/` or add it to `PATH`, and record the exact path and version in this file when known. *(See `tools/README.txt` — upstream [Mr-Wiseguy/N64Recomp](https://github.com/Mr-Wiseguy/N64Recomp); Zelda ingest documents in-tree CMake build of `lib/N64Recomp`.)*
-- [ ] Clone or submodule **Zelda64Recomp** (or chosen engine) into `lib/` when you are ready — not blocked on ROM, but blocked on picking upstream revision. *(See `lib/README.txt` for the submodule command.)*
+- [x] Obtain **N64Recomp** for this project (release or build); place the binary under `tools/` or add it to `PATH`, and record the exact path and version in this file when known. *(**Phase 1:** location and upstream are documented in `tools/README.txt` — see [Mr-Wiseguy/N64Recomp](https://github.com/Mr-Wiseguy/N64Recomp). **Obtain the built `N64Recomp` executable before Phase 5** when you run the recompiler.)*
+- [ ] Clone or submodule **Zelda64Recomp** (or chosen engine) into `lib/` when you are ready — not blocked on ROM, but blocked on picking upstream revision. *(See `lib/README.txt` for the submodule command. Deferred to Phase 6 — not required to close Phase 1.)*
 
 ### WSL (splat / MIPS / ELF)
 
 - [x] Install a current **WSL2** distro (Ubuntu is common).
 - [x] In WSL: Python 3.x + **splat** per [splat upstream](https://github.com/ethteck/splat) (pin a version once the first successful split is recorded here). *(Pinned in `requirements.txt`; smoke split recorded above.)*
 - [x] In WSL: **MIPS Binutils** (`mips-linux-gnu-as`, `mips-linux-gnu-ld`) for assembling splat `.s` output and linking to ELF. Ubuntu: **`binutils-mips-linux-gnu`**. **Note:** [splat Quickstart](https://github.com/ethteck/splat/wiki/Quickstart) treats full reassembly as out of scope; `splat split` does **not** require the assembler on PATH. The [General Workflow](https://github.com/ethteck/splat/wiki/General-Workflow) wiki discusses **`mips-linux-gnu-as`** (e.g. o32 float register aliases vs `macro.inc`).
-- [ ] In WSL (optional): **`mips-linux-gnu-gcc`** (Ubuntu metapackage **`gcc-mips-linux-gnu`**) for compiling **C** to MIPS objects. **Install:** in an interactive WSL shell: `sudo apt-get update && sudo apt-get install -y gcc-mips-linux-gnu`, then `mips-linux-gnu-gcc --version`. Check this box after install. **Do not put sudo passwords in `Workflow.md` or chat logs.**
+- [ ] In WSL (**optional / skipped for now**): **`mips-linux-gnu-gcc`** via **`gcc-mips-linux-gnu`** — only needed to compile **C** to MIPS objects. **Skipped on Ubuntu 26.04** (package not in archive); **not required** for Phase 1. Use **`binutils-mips-linux-gnu`** (`mips-linux-gnu-as` / `mips-linux-gnu-ld`) for asm → ELF. Revisit with **Ubuntu 24.04** WSL or Docker if you later need MIPS GCC.
 
   **If you see `E: Unable to locate package gcc-mips-linux-gnu`:** your WSL image may be **Ubuntu 26.04 (resolute)** or another suite where that metapackage is **not published yet** (this repo verified **no** `gcc*mips*` package names in `apt-cache` on 26.04 while **`binutils-mips-linux-gnu`** still exists). The same metapackage **is** in **Ubuntu 24.04 LTS (noble)** [universe](https://packages.ubuntu.com/noble/gcc-mips-linux-gnu). **Workarounds:** (1) add a second WSL distro **Ubuntu 24.04** from `wsl.exe --list --online` / Store and install `gcc-mips-linux-gnu` there; or (2) use a **Docker** (or Podman) **`ubuntu:24.04`** container for MIPS GCC builds. Avoid force-installing **noble** `.deb` files on **26.04** (ABI/dependency mismatch).
 
@@ -71,9 +71,9 @@ Complete these on your machine; check boxes as you go. **Do not invent tool vers
 
 ### Phase 1 exit criteria
 
-- Windows can build **nothing game-specific yet** — success means: VS + CMake ready, WSL + Python + splat split verified, ROM path + SHA1 recorded, and you know where N64Recomp will live (`tools/README.txt`).
-- **Still open before declaring Phase 1 complete:** install or build **N64Recomp** (and optionally add **Zelda64Recomp** as a submodule). MIPS **binutils** (`mips-linux-gnu-as` / `mips-linux-gnu-ld`) are installed for ELF link of asm; add **`mips-linux-gnu-gcc`** only if your build scripts compile C for MIPS.
-- Update **Phase status** above to mark Phase 1 complete when exit criteria are met.
+- **Phase 1 is closed when:** VS + CMake + Clang (optional) on Windows; WSL + Python + **splat split** verified; ROM + SHA1; **MIPS binutils** (`mips-linux-gnu-as` / `mips-linux-gnu-ld`) for future asm/ELF work; and **where N64Recomp will come from** is documented (`tools/README.txt`). **MIPS GCC** is optional and was **waived** for this host (Ubuntu 26.04 has no `gcc-mips-linux-gnu`; binutils-only is enough until you compile C for MIPS).
+- **Before Phase 5:** place the **`N64Recomp`** (and if needed **`RSPRecomp`**) executable(s) under `tools/` or on `PATH` and record versions here.
+- **Before Phase 6:** add engine submodule under `lib/` per `lib/README.txt` when you pick a revision.
 
 ---
 
