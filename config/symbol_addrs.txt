@@ -1,2 +1,5 @@
-ramMain = 0x80200050;
+// Visit https://github.com/ethteck/splat/wiki/Adding-Symbols for documentation about this file
+// From splat create_config; prior note used name ramMain at same VRAM — treat as entry / boot handoff.
+entrypoint = 0x80200050; // type:func
+main = 0x80231150; // type:func
 g_BuildString = 0x802F5E58;

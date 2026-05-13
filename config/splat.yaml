@@ -1,42 +1,68 @@
+# splat 0.40+ — required options live under `options:` (see splat Quickstart).
+# Segment layout below was produced by `python3 -m splat create_config roms/afa.n64.us.z64`
+# then paths were normalized to config/ and build/.
 name: Aero Fighters Assault (USA)
-basename: aerofighters_assault
-
-# Computed from local bytes (PowerShell Get-FileHash SHA1); verify against your No-Intro / redump label.
-sha1: "6742f67d7d2639072e186d240237be1c662cb25a"
-
+sha1: 6742f67d7d2639072e186d240237be1c662cb25a
 options:
+  basename: aerofighters_assault
+  # base_path is resolved as dirname(this file) / base_path → repo root (see splat util/options.py).
+  base_path: ..
+  target_path: roms/afa.n64.us.z64
+  elf_path: build/aerofighters_assault.elf
   platform: n64
   compiler: IDO
-  endianness: big
-  base_address: 0x80000000
-  entry_point: 0x80200050
+
   ld_script_path: build/aerofighters_assault.ld
-  symbol_addrs_path: config/symbol_addrs.txt
+  ld_dependencies: True
+
+  find_file_boundaries: True
+  header_encoding: ASCII
+
+  o_as_suffix: True
+  use_legacy_include_asm: False
+  mips_abi_float_regs: o32
+
+  symbol_addrs_path:
+    - config/symbol_addrs.txt
+  reloc_addrs_path:
+    - config/reloc_addrs.txt
   undefined_funcs_auto_path: config/undefined_funcs_auto.txt
   undefined_syms_auto_path: config/undefined_syms_auto.txt
-  find_file_boundaries: True
-  migrate_rodata_to_functions: False
-  use_legacy_include_asm: False
+
+  extensions_path: tools/splat_ext
+
+  rodata_string_guesser_level: 2
+  data_string_guesser_level: 2
 
 segments:
   - name: header
     type: header
-    start: 0x00000000
-    vram: 0x80000000
+    start: 0x0
 
-  - name: boot
+  - name: ipl3
+    type: bin
+    start: 0x40
+
+  - name: entry
     type: code
-    start: 0x00000040
-    vram: 0x80000040
+    start: 0x1000
+    vram: 0x80200050
     subsegments:
-      - [0x00000040, asm, boot]
+      - [0x1000, hasm]
 
   - name: main
     type: code
-    start: 0x001FF000
-    vram: 0x80200000
-    end: 0x00380000
+    start: 0x1050
+    vram: 0x802000A0
+    follows_vram: entry
+    bss_size: 0x306C0
     subsegments:
-      - [0x001FF000, asm, main]
-      - [0x00280000, data]
-      - [0x00300000, rodata]
+      - [0x1050, asm]
+      - [0x4C050, data]
+      - { type: bss, vram: 0x80256D70 }
+
+  - type: bin
+    start: 0x57D20
+    follows_vram: main
+
+  - [0x800000]

@@ -35,3 +35,7 @@ __pycache__/
 
 # Generated asm (when splat emits into repo — adjust path if you use asm/ at root)
 asm/
+
+# splat cache / extracted bins (regenerated)
+.splache/
+assets/*.bin

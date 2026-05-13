@@ -99,63 +99,16 @@ Keep `Docs/` current as the project grows: at minimum **`Workflow.md`**, **`Arch
 - Earlier Ghidra notes: `ramMain` at **0x80200050**; build string **`g_BuildString`** at VRAM **0x802F5E58** (ROM **0x00F6E08**).
 - Start conservative on segment boundaries; refine after first splat run and map comparison.
 
-### Draft `config/splat.yaml` (starting point)
+### `config/splat.yaml` (authoritative)
 
-Canonical home for this file in-repo: **`config/splat.yaml`**. The block below is a **draft** — adjust `sha1`, segment `end` / subsegments, and paths after the first successful split and ELF inspection.
+The live splat 0.40 config is **`config/splat.yaml`**. It was bootstrapped with `python3 -m splat create_config roms/afa.n64.us.z64` (see [splat Quickstart](https://github.com/ethteck/splat/wiki/Quickstart)), then paths were adjusted for `base_path: ..` so `target_path`, `build/`, and `config/symbol_addrs.txt` resolve from the repo root. A first successful split was run with:
 
-```yaml
-name: Aero Fighters Assault (USA)
-basename: aerofighters_assault
+`python3 -m splat split config/splat.yaml` (from repo root, in WSL).
 
-sha1: "6742f67d7d2639072e186d240237be1c662cb25a"  # authoritative copy: config/splat.yaml
+**Layout note:** splat named the boot blob **`ipl3`** as `type: bin` at `0x40` (not hand-written `boot`/`code` at `0x80000040`). Reconcile IPL3 vs main code VRAM in Ghidra with the project owner before treating segment names or the trailing `unknown` tail as final.
 
-options:
-  platform: n64
-  compiler: IDO
-  endianness: big
-  base_address: 0x80000000
-  entry_point: 0x80200050
-  ld_script_path: build/aerofighters_assault.ld
-  symbol_addrs_path: config/symbol_addrs.txt
-  undefined_funcs_auto_path: config/undefined_funcs_auto.txt
-  undefined_syms_auto_path: config/undefined_syms_auto.txt
-  find_file_boundaries: True
-  migrate_rodata_to_functions: False
-  use_legacy_include_asm: False
+### `config/symbol_addrs.txt` (splat style)
 
-segments:
-  - name: header
-    type: header
-    start: 0x00000000
-    vram: 0x80000000
+Canonical file: **`config/symbol_addrs.txt`**. splat accepts `//` comments (see files emitted by `create_config`). Current starter lines include `entrypoint`, `main` (from auto config), and `g_BuildString` from prior Ghidra notes. The older name **ramMain** at **0x80200050** aligns with **`entrypoint`** in the auto layout — pick one symbol name in Ghidra and keep this file consistent.
 
-  - name: boot
-    type: code
-    start: 0x00000040
-    vram: 0x80000040
-    subsegments:
-      - [0x00000040, asm, boot]
-
-  - name: main
-    type: code
-    start: 0x001FF000
-    vram: 0x80200000
-    end: 0x00380000
-    subsegments:
-      - [0x001FF000, asm, main]
-      - [0x00280000, data]
-      - [0x00300000, rodata]
-```
-
-**Boot VRAM:** the YAML above matches the prior draft (`0x80000040`). Confirm the real IPL/boot segment base in Ghidra (and Pilotwings 64 / similar Paradigm ROMs) before treating it as final — mismatched boot VRAM will poison the whole map.
-
-### Draft `symbol_addrs.txt` fragment (splat style: `symbol = vram`)
-
-Canonical file: **`config/symbol_addrs.txt`** (path set by `symbol_addrs_path` in `config/splat.yaml`). **Symbol on the left, address on the right.**
-
-```text
-ramMain = 0x80200050;
-g_BuildString = 0x802F5E58;
-```
-
-Confirm each name and whether splat should treat it as code, data, or rodata in Ghidra first; the ingest pattern from Zelda64Recomp uses lines like `__start = 0x80000000;` (see `Docs/RepoInjests/Zelda64/zelda64recomp-zelda64recomp-8a5edab282632443.txt` around the linker `symbol_addrs` excerpts).
+Zelda64Recomp linker-style examples like `__start = 0x80000000;` appear in `Docs/RepoInjests/Zelda64/zelda64recomp-zelda64recomp-8a5edab282632443.txt` (search for `symbol_addrs` / linker excerpts there).
