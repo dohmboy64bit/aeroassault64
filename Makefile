@@ -2,7 +2,7 @@
 # Prerequisite: from repo root run `python3 -m splat split config/splat.yaml` so asm/, assets/ipl3.bin, and build/*.ld exist.
 # See Docs/Workflow.md and https://github.com/ethteck/splat/wiki/General-Workflow
 
-.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity
+.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync
 
 .DEFAULT_GOAL := all
 
@@ -70,6 +70,10 @@ N64RECOMP_CFG ?= config/aerofighters_assault.n64recomp.toml
 n64recomp: $(ELF)
 	@test -f $(N64RECOMP_EXE) || (echo "Missing $(N64RECOMP_EXE)"; exit 1)
 	$(N64RECOMP_EXE) $(N64RECOMP_CFG)
+
+# Ghidra Phase3: RODATA_ROM_SPLITS must match splat main rodata subsegments (stdlib check).
+verify-rodata-sync:
+	python3 tools/verify_rodata_splits_sync.py
 
 check-split:
 	@test -f $(LDSCRIPT) || (echo "Missing $(LDSCRIPT). Run: $(SPLAT) split $(SPLIT_CFG)"; exit 1)

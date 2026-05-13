@@ -169,7 +169,7 @@ Work in a **non-shared** Ghidra project so imports and memory blocks stay under 
 ### Phase 3 closeout checklist
 
 - [x] Reconcile **`post_data`** vs **`800000.bss`**: **`tools/dedupe_post_data_bss.py`** (uses **`mips-linux-gnu-readelf -s`** on **`post_data.o`** per binutils **readelf(1)**, same line shape as **`tools/gen_splat_extern_ld.py`**) strips **`nonmatching`+`glabel`/`dlabel`+`.space`** / **`.comm`** in **`asm/data/800000.bss.s`** when the symbol is already GLOBAL in **`post_data.o`**. **`make dedupe-bss`** then **`make LINK_STRICT=1 verify`** completes without **`--allow-multiple-definition`** (verified **2026-05-13** WSL). Re-run dedupe after each **`splat split`** (regenerated **`800000.bss.s`**). **`asm/data/57D20.bss.s`** stays excluded from the link per **`Makefile`**.
-- [ ] *(Optional — does not block calling Phase 3 complete.)* Validate **`rodata`** split boundaries in Ghidra (xrefs from **`.text`** into **`.rom`** **0x52B90–0x57D20**); adjust **`config/splat.yaml`** if a boundary cuts a table.
+- [ ] *(Optional — does not block calling Phase 3 complete.)* Validate **`rodata`** split boundaries in Ghidra (xrefs from **`.text`** into **`.rom`** **0x52B90–0x57D20**); adjust **`config/splat.yaml`** if a boundary cuts a table. **CI-style drift check:** **`python3 tools/verify_rodata_splits_sync.py`** or **`make verify-rodata-sync`** — ensures **`tools/ghidra/Phase3_Closeout_Report.py`** **`RODATA_ROM_SPLITS`** matches splat **`main`** **`rodata`** lines.
 
 **Completed from this backlog (2026-05-13):** subdivided **`rodata`** per splat stdout (**`0x52BC0`** … **`0x57A60`**); smoke **`make`** / **`make verify`** still green after re-split.
 
