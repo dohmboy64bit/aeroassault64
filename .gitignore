@@ -1,0 +1,37 @@
+# ROMs (keep directory, not dumps)
+roms/*.z64
+roms/*.n64
+roms/*.v64
+roms/*.rom
+!roms/.gitkeep
+
+# Legacy / accidental ROM paths under Docs
+Docs/Rom/*.z64
+Docs/Rom/*.n64
+Docs/Rom/*.v64
+
+# Build outputs
+build/
+out/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+!CMakePresets.json
+
+# IDE / OS
+.vs/
+.vscode/*.log
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# Python / splat
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Generated asm (when splat emits into repo — adjust path if you use asm/ at root)
+asm/
