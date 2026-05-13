@@ -87,7 +87,7 @@ Keep `Docs/` current as the project grows: at minimum **`Workflow.md`**, **`Arch
 
 - **Game:** Aero Fighters Assault (USA)
 - **ROM path (local, gitignored):** `roms/afa.n64.us.z64`
-- **Active phase focus:** Phase 3–4 — apply Ghidra findings to **`config/splat.yaml`** (especially ROM **`0x57D20`** tail), re-run **`splat split`**, then assemble/link toward ELF (`Docs/Workflow.md`).
+- **Active phase focus:** Phase 3 **`splat.yaml` / split** is **complete** per **`Docs/Workflow.md`**; primary work is **Phase 4** (ELF smoke / **`make verify`**, optional **`LINK_STRICT=1`** after **`dedupe-bss`**) and later N64Recomp.
 
 ---
 
