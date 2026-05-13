@@ -177,7 +177,11 @@ def main():
     a = addr_in_block(rom, ROM_OFF_DATA)
     w0 = read_be32_safe(mem, a, "ROM+0x%X" % ROM_OFF_DATA)
     if w0 is not None:
-        print("  First word: 0x%08X  %s" % (w0, mips_hint_be32(w0)))
+        if w0 == 0:
+            hint = "all-zero (often .bss template / padding in ROM; confirm in Ghidra vs real .data start)"
+        else:
+            hint = mips_hint_be32(w0)
+        print("  First word: 0x%08X  %s" % (w0, hint))
         ins = listing.getInstructionAt(a)
         print("  Ghidra code unit at start: %s" % (ins if ins else "(undefined — not disassembled as code)"))
 
@@ -222,8 +226,13 @@ def main():
     check_ram_vram(EXP_GSTR_VRAM, "g_BuildString")
 
     print("\n--- Paste targets for Docs/Workflow.md ---")
-    print("  ROM Load_Address: 0x%08X" % load_addr)
-    print("  Release_Offset:   0x%08X  (note meaning after checking ROM wiki)")
+    if load_addr is not None:
+        print("  ROM Load_Address: 0x%08X" % load_addr)
+    if release is not None:
+        print(
+            "  Release_Offset:   0x%08X  (compare to [N64brew ROM](https://n64brew.dev/wiki/ROM) / your loader)"
+            % release
+        )
     tail_addr = addr_in_block(rom, ROM_OFF_TAIL)
     tw = read_be32_safe(mem, tail_addr, "ROM+0x%X tail" % ROM_OFF_TAIL)
     if tw is not None:
