@@ -87,7 +87,7 @@ Keep `Docs/` current as the project grows: at minimum **`Workflow.md`**, **`Arch
 
 - **Game:** Aero Fighters Assault (USA)
 - **ROM path (local, gitignored):** `roms/afa.n64.us.z64`
-- **Active phase focus:** Phase 2 — ROM + Ghidra alignment (see `Docs/Workflow.md`). `config/splat.yaml` exists and a first `splat split` has been run; refine segments with owner-reviewed Ghidra maps.
+- **Active phase focus:** Phase 3–4 — apply Ghidra findings to **`config/splat.yaml`** (especially ROM **`0x57D20`** tail), re-run **`splat split`**, then assemble/link toward ELF (`Docs/Workflow.md`).
 
 ---
 
