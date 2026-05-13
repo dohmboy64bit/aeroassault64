@@ -7,7 +7,7 @@ This file tracks **phase order** from `Docs/SystemPrompt.md`. Do not skip phases
 | Phase | Description | Status |
 |-------|-------------|--------|
 | 1 | Environment setup | **Complete** |
-| 2 | ROM + Ghidra | Not started |
+| 2 | ROM + Ghidra | **In progress** |
 | 3 | `splat.yaml` / split | First WSL `splat split` OK (see host log) |
 | 4 | ELF (WSL / splat) | Not started |
 | 5 | N64Recomp | Not started |
@@ -77,9 +77,53 @@ Complete these on your machine; check boxes as you go. **Do not invent tool vers
 
 ---
 
-## Later phases (placeholders)
+## Phase 2 — Ghidra first (ROM truth)
 
-- **Phase 2:** Ghidra session with project owner; confirm boot/main VRAM and entry before locking `config/splat.yaml`.
-- **Phase 3–4:** Run splat from repo root (or documented cwd); fix segment bounds; generate ELF.
-- **Phase 5:** Add N64Recomp TOML; emit only under `RecompiledFuncs/`.
-- **Phase 6–8:** Integrate `lib/`, wire `src/` and `patches/`, CMake PE, VS debugger — see `Docs/Debugging.md`.
+Do this **before** changing `config/splat.yaml` for “final” layout or investing in ELF link. Per `Docs/SystemPrompt.md`, align conclusions with the project owner; do not treat guessed maps as authoritative.
+
+### Baseline (repo — use in Ghidra)
+
+| Item | Value |
+|------|--------|
+| ROM file (local) | `roms/afa.n64.us.z64` |
+| SHA1 | `6742f67d7d2639072e186d240237be1c662cb25a` (must match `config/splat.yaml`) |
+| Prior notes (re-verify) | VRAM **0x80200050** — entry / `ramMain`; **`g_BuildString`** VRAM **0x802F5E58**, ROM **0x00F6E08** (`Docs/SystemPrompt.md`) |
+| splat draft (reconcile) | `config/splat.yaml` — `ipl3` @ ROM **0x40** (`bin`); **`entry`** ROM **0x1000** VRAM **0x80200050** (`hasm`); **`main`** from ROM **0x1050**; tail `bin` from **0x57D20**; last line **`[0x800000]`** (full ROM tail still “unknown” to splat until segments are filled) |
+
+### Ghidra session checklist
+
+Work in a **non-shared** Ghidra project so imports and memory blocks stay under your control.
+
+1. **Import** the same bytes as splat: `roms/afa.n64.us.z64` (verify size/SHA1 if Ghidra offers it).
+2. **Loader / image base:** use whatever N64/ND loader or workflow you already trust for Paradigm-era games; if unsure, stop and pick a loader with the project owner (`Docs/SystemPrompt.md` Ghidra rule) — do not assume a default Ghidra import is correct for this ROM.
+3. **Sanity — entry:** At VRAM **0x80200050**, confirm code looks like a real entry (not obvious garbage). Label **`entrypoint`** (or your chosen name) and note ROM offset Ghidra shows for that address.
+4. **Sanity — build string:** Confirm **`g_BuildString`** (or equivalent) at VRAM **0x802F5E58** / ROM **0x00F6E08** reads as a plausible build/version string; if it does not, record what *is* there — the old note may be wrong.
+5. **IPL3 / boot (ROM 0x40):** Decide what lives in **0x40–0xFFF** (before `entry` at **0x1000** in current splat): raw IPL3 only vs mixed code; whether splat’s **`ipl3` `bin`** segment is correct or should become **`code`/`asm`** with a chosen VRAM (owner decision).
+6. **Main code region:** Bound the bulk of **.text** (start/end VRAM and ROM). Compare to splat’s **`main`** subsegments (asm / data / bss split at **0x4C050** etc.); note where **.rodata** and **.bss** really begin if different from splat’s first-pass hints.
+7. **Tail of ROM:** From the last defined segment to **0x800000** — what is it (more code, overlays, assets, padding)? This drives the final **`bin`** / named segments vs one big unknown.
+8. **Write-down:** Fill the table below in this file (or paste into chat / issue) so Phase 3 edits to `config/splat.yaml` are traceable.
+
+### Ghidra findings log (fill in after session)
+
+| Question | Your answer (VRAM / ROM / notes) |
+|----------|----------------------------------|
+| Confirmed entry / init address | |
+| `g_BuildString` (or correction) | |
+| IPL3 region ROM **0x40**–**0xFFF** description | |
+| Main `.text` ROM/VRAM range | |
+| `.data` / `.rodata` / `.bss` boundaries (best effort) | |
+| ROM **0x57D20**+ until **0x800000** | |
+| Disagreements vs current `config/splat.yaml` | |
+
+### Phase 2 exit
+
+- [ ] Findings log above completed and reviewed with project owner where needed.
+- [ ] Update **Phase status** row “ROM + Ghidra” to **Complete** and proceed to Phase 3–4 (splat + ELF).
+
+---
+
+## Later phases (Phase 3+)
+
+- **Phase 3–4:** Apply Ghidra log to `config/splat.yaml`; run `splat split`; assemble/link toward ELF.
+- **Phase 5:** N64Recomp `.toml`; output under `RecompiledFuncs/` only.
+- **Phase 6–8:** `lib/` engine, `src/`, `patches/`, CMake PE, VS debugger — see `Docs/Debugging.md`.
