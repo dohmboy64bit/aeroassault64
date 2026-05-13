@@ -21,6 +21,11 @@ This file tracks **phase order** from `Docs/SystemPrompt.md`. Do not skip phases
 
 Complete these on your machine; check boxes as you go. **Do not invent tool versions** — use the versions required by the splat and Zelda64Recomp repos when you add them.
 
+### Host verification log (recorded when scaffolding landed)
+
+- **Windows:** `cmake` reported **4.2.1** on the machine used for setup (Kitware build). Re-run `cmake --version` after upgrades.
+- **WSL:** `wsl --version` reported **2.6.3**; default distro `python3` was **3.14.4**. Pin splat/MIPS versions separately per upstream docs.
+
 ### Shared reference docs (read early)
 
 - [Hack64 Wiki — Nintendo 64 Hacking](https://hack64.net/wiki/doku.php?id=nintendo_64)
