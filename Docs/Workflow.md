@@ -124,10 +124,12 @@ Work in a **non-shared** Ghidra project so imports and memory blocks stay under 
 
 ### Ghidra findings log (fill in after session)
 
+*Evidence snapshot (user): Search Memory → String **"Aero Fighters Assault"** in `afa.n64.us.z64`.*
+
 | Question | Your answer (VRAM / ROM / notes) |
 |----------|----------------------------------|
-| Confirmed entry / init address | |
-| `g_BuildString` (or correction) | |
+| Confirmed entry / init address | *(pending — next Ghidra pass)* |
+| `g_BuildString` (or correction) | **VRAM `802f5e58`:** `ds "Aero Fighters Assault v0.93 built on %s..."` — confirms prior **`g_BuildString`** @ **0x802F5E58** in `config/symbol_addrs.txt` / `Docs/SystemPrompt.md`. **Also listed @ `b00f6e08`** in Ghidra (same string); treat as ROM/file-backed view of the same data — cross-check against documented ROM **0x00F6E08** and your loader’s block naming. |
 | IPL3 region ROM **0x40**–**0xFFF** description | |
 | Main `.text` ROM/VRAM range | |
 | `.data` / `.rodata` / `.bss` boundaries (best effort) | |
