@@ -9,7 +9,7 @@ This file tracks **phase order** from `Docs/SystemPrompt.md`. Do not skip phases
 | 1 | Environment setup | **Complete** |
 | 2 | ROM + Ghidra | **Complete** |
 | 3 | `splat.yaml` / split | **Complete** — **`rodata`** subdivided **0x52B90…0x57A60** per **splat 0.40.0** split stdout (extra nops @ VRAM **0x80251BE0**); **`asm`** splits ROM **`< 0x4C050`**; **`post_data`** single **`asm`** from **`0x57D20`** (tail splits still rejected: VRAM order vs **`bss`**); **`splat split`** OK; **`post_data`** vs **`800000.bss`** handled via **`tools/dedupe_post_data_bss.py`** + **`LINK_STRICT`** (see **What to remember**). *Optional follow-up:* Ghidra xrefs to validate **`rodata`** boundaries (**`Docs/Workflow.md`** “Still to do”). |
-| 4 | ELF (WSL / splat) | **Smoke complete (2026-05-13)** — root **`Makefile`** / **`make verify`**: `mips-linux-gnu-as` / `mips-linux-gnu-ld`, **`--oformat elf32-tradbigmips`** (`mips-linux-gnu-objdump -i`), **`build/splat_extern.ld`** via **`tools/gen_splat_extern_ld.py`** + **`config/link_extern_additions.txt`**. **`57D20.bss.o`** excluded on purpose: splat emits **`asm/data/57D20.bss.s`** but the linker script never pulls it in — those **`D_*`** labels sit at **0x80256D70+**, i.e. the same VRAM span as **`post_data.o(.text)`**, so a linear ELF cannot place that **`.bss`** blob without overlapping **`.main`**. Default **`--allow-multiple-definition`**: **`post_data`** vs **`800000.bss`** duplicate **`func_*`** until **`make dedupe-bss`** + **`make LINK_STRICT=1`** (see **`tools/dedupe_post_data_bss.py`**). **`pref`→`nop`**: **`asm/post_data.s`** only (GNU **`as`** + **`-march=vr4300`** rejects **`pref`**; MIPS IV opcode — see VR4300 / binutils docs). |
+| 4 | ELF (WSL / splat) | **In progress** — smoke **`make` / `make verify`** done; formal Phase 4 checklist and **`make strict-verify`** in **`Docs/Workflow.md`** § Phase 4. Next gate: **N64Recomp** (Phase 5) consumes **`build/aerofighters_assault.elf`** per **`config/splat.yaml`** **`elf_path`**. |
 | 5 | N64Recomp | Not started |
 | 6 | Engine + patches | Not started |
 | 7 | CMake → Windows PE | Not started |
@@ -20,8 +20,8 @@ This file tracks **phase order** from `Docs/SystemPrompt.md`. Do not skip phases
 ## What to remember (`splat split` → dedupe → link)
 
 - **`asm/`** is in **`.gitignore`** (splat output). **`splat split`** regenerates **`asm/data/800000.bss.s`** and the rest of **`asm/`**; **`tools/dedupe_post_data_bss.py`** changes are **not preserved** across a split until you run dedupe again.
-- **Strict link (no `--allow-multiple-definition`):** after **`splat split`**, build **`build/asm/post_data.o`** (**`make build/asm/post_data.o`**), run **`make dedupe-bss`**, then **`make LINK_STRICT=1 verify`**. Default **`LINK_STRICT=0`** in the **`Makefile`** keeps **`--allow-multiple-definition`** so **`make verify`** still works before dedupe on a clean tree.
-- **References:** **`tools/dedupe_post_data_bss.py`**, **`tools/README.txt`**, **`Makefile`** (`dedupe-bss`, **`LINK_STRICT`**).
+- **Strict link (no `--allow-multiple-definition`):** after **`splat split`**, build **`build/asm/post_data.o`** (**`make build/asm/post_data.o`**), run **`make dedupe-bss`**, then **`make LINK_STRICT=1 verify`**. Shorthand: **`make strict-verify`**. Default **`LINK_STRICT=0`** in the **`Makefile`** keeps **`--allow-multiple-definition`** so **`make verify`** still works before dedupe on a clean tree.
+- **References:** **`tools/dedupe_post_data_bss.py`**, **`tools/README.txt`**, **`Makefile`** (`dedupe-bss`, **`strict-verify`**, **`LINK_STRICT`**).
 
 ---
 
@@ -175,8 +175,39 @@ Work in a **non-shared** Ghidra project so imports and memory blocks stay under 
 
 ---
 
-## Later phases (Phase 3+)
+## Phase 4 — ELF (WSL / splat)
 
-- **Phase 3–4:** Apply Ghidra log to `config/splat.yaml`; run `splat split`; assemble/link toward ELF.
+**Goal:** a reproducible **MIPS o32** ELF at **`build/aerofighters_assault.elf`** that matches splat’s **`build/aerofighters_assault.ld`**, with a **strict** link path (no **`--allow-multiple-definition`**) ready for **N64Recomp** (Phase 5). See [splat General Workflow](https://github.com/ethteck/splat/wiki/General-Workflow).
+
+### Prerequisites
+
+- **WSL** (or Linux) with **`binutils-mips-linux-gnu`** on **`PATH`** (`mips-linux-gnu-as`, **`mips-linux-gnu-ld`**, **`mips-linux-gnu-readelf`**).
+- **ROM** at **`roms/afa.n64.us.z64`** (gitignored) and **`python3 -m splat split config/splat.yaml`** so **`asm/`**, **`build/*.ld`**, **`assets/ipl3.bin`**, and **`include/`** exist.
+
+### Commands (repo root, WSL)
+
+| Step | Command |
+|------|---------|
+| Regenerate asm / ld | **`make split`** or **`python3 -m splat split config/splat.yaml`** |
+| Default smoke ELF | **`make`** then **`make verify`** (**`LINK_STRICT=0`** — permissive **`ld`**) |
+| Strict link + verify | **`make strict-verify`** (runs **`dedupe-bss`**, then links with **`LINK_STRICT=1`**) — same as **What to remember** |
+
+### Phase 4 checklist
+
+- [x] Root **`Makefile`**: assemble **`asm/**/*.s`**, **`post_data`** **`pref`→`nop`**, **`build/splat_extern.ld`** from **`tools/gen_splat_extern_ld.py`**, link **`-e entrypoint`** **`--oformat elf32-tradbigmips`**.
+- [x] **`make verify`** reads **`mips-linux-gnu-readelf -h`** (Type / Machine / Entry / Flags).
+- [x] **`tools/dedupe_post_data_bss.py`** + **`make dedupe-bss`**; **`LINK_STRICT=1`** link verified (**2026-05-13**).
+- [ ] Run **`make strict-verify`** after each **`splat split`** before trusting multiply-defined cleanliness (regenerates **`800000.bss.s`** — see **What to remember**).
+- [ ] **ELF sanity:** confirm **`Entry point address`** matches splat entry (**`0x80200050`**) and **`Machine: MIPS R3000`** / **o32** flags match your toolchain; optional **`readelf -S`** / **`nm`** spot-checks vs Ghidra segment notes.
+- [ ] **Handoff to Phase 5:** **`config/splat.yaml`** **`elf_path: build/aerofighters_assault.elf`** — add game **`*.toml`** for **`tools/N64Recomp.exe`** per [N64Recomp](https://github.com/Mr-Wiseguy/N64Recomp) docs; output only under **`RecompiledFuncs/`**.
+
+### Phase 4 exit criteria
+
+Phase **4** is **done** when: strict path is documented and repeatable (**`make strict-verify`** green after a fresh **`splat split` + dedupe**), ELF header checks out against **`config/symbol_addrs.txt`** / Ghidra entry, and you are ready to commit a first **N64Recomp** config run (Phase **5**).
+
+---
+
+## Later phases (Phase 5+)
+
 - **Phase 5:** N64Recomp `.toml`; output under `RecompiledFuncs/` only.
 - **Phase 6–8:** `lib/` engine, `src/`, `patches/`, CMake PE, VS debugger — see `Docs/Debugging.md`.

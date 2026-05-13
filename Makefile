@@ -2,7 +2,7 @@
 # Prerequisite: from repo root run `python3 -m splat split config/splat.yaml` so asm/, assets/ipl3.bin, and build/*.ld exist.
 # See Docs/Workflow.md and https://github.com/ethteck/splat/wiki/General-Workflow
 
-.PHONY: all split clean check-split verify dedupe-bss
+.PHONY: all split clean check-split verify dedupe-bss strict-verify
 
 .DEFAULT_GOAL := all
 
@@ -50,6 +50,10 @@ split:
 # Remove `.comm` / `.lcomm` lines in `asm/**/*.bss.s` that duplicate labels in `post_data.o` (needs mips nm or scans .s).
 dedupe-bss: build/asm/post_data.o
 	python3 tools/dedupe_post_data_bss.py --apply
+
+# Phase 4: dedupe `800000.bss.s` then link with single-definition rules (see Docs/Workflow.md § Phase 4).
+strict-verify: dedupe-bss
+	$(MAKE) LINK_STRICT=1 verify
 
 check-split:
 	@test -f $(LDSCRIPT) || (echo "Missing $(LDSCRIPT). Run: $(SPLAT) split $(SPLIT_CFG)"; exit 1)

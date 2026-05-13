@@ -1,6 +1,6 @@
 Phase 4 (MIPS ELF, WSL): from repo root run `make` then `make verify` (see root `Makefile`, `tools/gen_splat_extern_ld.py`, `Docs/Workflow.md`). Requires `splat split` output (`build/aerofighters_assault.ld`, `asm/`) and `binutils-mips-linux-gnu`.
 
-**BSS vs `post_data` duplicates:** after `splat split`, build `build/asm/post_data.o` once (`make build/asm/post_data.o`), run `make dedupe-bss` (`tools/dedupe_post_data_bss.py --apply`), then `make LINK_STRICT=1` to link **without** `--allow-multiple-definition`. See script docstring and `Makefile` comments.
+**BSS vs `post_data` duplicates:** after `splat split`, build `build/asm/post_data.o` once (`make build/asm/post_data.o`), run `make dedupe-bss` (`tools/dedupe_post_data_bss.py --apply`), then `make LINK_STRICT=1 verify` to link **without** `--allow-multiple-definition`. Shorthand: **`make strict-verify`**. See script docstring and `Makefile` comments.
 
 ---
 

@@ -87,7 +87,7 @@ Keep `Docs/` current as the project grows: at minimum **`Workflow.md`**, **`Arch
 
 - **Game:** Aero Fighters Assault (USA)
 - **ROM path (local, gitignored):** `roms/afa.n64.us.z64`
-- **Active phase focus:** Phase 3 **`splat.yaml` / split** is **complete** per **`Docs/Workflow.md`**; primary work is **Phase 4** (ELF smoke / **`make verify`**, optional **`LINK_STRICT=1`** after **`dedupe-bss`**) and later N64Recomp.
+- **Active phase focus:** **Phase 4** — ELF pipeline in **`Docs/Workflow.md`** § Phase 4 (`make` / `make verify` / **`make strict-verify`**); then **Phase 5** N64Recomp (`.toml` → **`RecompiledFuncs/`** only).
 
 ---
 
