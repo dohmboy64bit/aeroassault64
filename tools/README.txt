@@ -21,4 +21,6 @@ Rebuild (from README Building section — https://github.com/Mr-Wiseguy/N64Recom
 
 If `N64Recomp-src` cannot be deleted (file in use), close IDEs/indexers touching that path and remove the folder manually; `tools/N64Recomp-src/` is gitignored.
 
+Ghidra: see `tools/ghidra/README.txt` and `Phase2_Closeout_Report.py` for a Phase 2 ROM/RAM report script.
+
 Zelda64Recomp also documents in-tree builds in Docs/RepoInjests/Zelda64/zelda64recomp-zelda64recomp-8a5edab282632443.txt.
