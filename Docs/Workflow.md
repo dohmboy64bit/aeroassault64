@@ -128,13 +128,13 @@ Work in a **non-shared** Ghidra project so imports and memory blocks stay under 
 
 | Question | Your answer (VRAM / ROM / notes) |
 |----------|----------------------------------|
-| Confirmed entry / init address | *(pending — next Ghidra pass)* |
+| Confirmed entry / init address | **Ghidra `.ram`:** **`ramMain()`** @ **`80200050`**, marked **Entry Point**. Prologue: **`lui t0, 0x8025`** + **`addiu t0, 0x6d70`** → **`t0 = 0x80256D70`**; loop clears words from that address (BSS zero); then **`jr t2 => FUN_80231150`**. So **entry = `0x80200050`**, **first real game routine = `0x80231150`**, **BSS base = `0x80256D70`** — matches **`config/symbol_addrs.txt`** (`entrypoint`, `main`) and **`config/splat.yaml`** (`entry` VRAM **`0x80200050`**, `main` follows, **`bss` vram `0x80256D70`**, **`bss_size: 0x306C0`**). Ghidra block span **`80200050`–`809ff04f`** is the analyzer’s RAM window (not necessarily full hardware RAM). |
 | `g_BuildString` (or correction) | **VRAM `802f5e58`:** `ds "Aero Fighters Assault v0.93 built on %s..."` — confirms prior **`g_BuildString`** @ **0x802F5E58** in `config/symbol_addrs.txt` / `Docs/SystemPrompt.md`. **Also listed @ `b00f6e08`** in Ghidra (same string); treat as ROM/file-backed view of the same data — cross-check against documented ROM **0x00F6E08** and your loader’s block naming. |
 | IPL3 region ROM **0x40**–**0xFFF** description | **Ghidra `.boot`:** `bootMain()` at **`a4000040`**–**`a4000fff`** (block comment *ROM bootloader*). Opcodes are real MIPS: **COP0** (`mtc0`), **RI/MI/RDRAM** MMIO (`0xA3F0…`, `0xA3F8…`), stack in DMEM, **`jal`** to helpers, loops with **`cache`**, ends **`jr t4 => TLB_REFILL`**. That matches **IPL3 / PIF bootstrap** running in **SP DMEM** (**`0xA4000000`** region), not KSEG0 game RAM. **Cart ROM `0x40`–`0xFFF`** is this blob; splat **`ipl3` `bin`** is still the right shape for splitting **game** code at **`0x1000`**. |
-| Main `.text` ROM/VRAM range | |
+| Main `.text` ROM/VRAM range | *(still refine bounds / rodata — Ghidra confirms entry handoff only)* **VRAM:** entry stub **`0x80200050`**, transfer to **`main` @ `0x80231150`** per `jr` above. **ROM:** splat still has **`entry`** @ **`0x1000`**, **`main` .text** from **`0x1050`** (`config/splat.yaml`). |
 | `.data` / `.rodata` / `.bss` boundaries (best effort) | |
 | ROM **0x57D20**+ until **0x800000** | |
-| Disagreements vs current `config/splat.yaml` | **None for IPL3:** `ipl3` as **`bin`** @ **0x40** remains consistent with “don’t fold IPL into main `0x8020…` VRAM” unless you later choose a multi–load address model. |
+| Disagreements vs current `config/splat.yaml` | **IPL3:** none (see prior row). **Entry / main / BSS:** Ghidra matches current yaml + symbols — **no change required** from this snippet alone. |
 
 ### Phase 2 exit
 
