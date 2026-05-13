@@ -1,9 +1,7 @@
 Engine submodule (not bundled in-repo)
 
 Preferred upstream: https://github.com/Mr-Wiseguy/Zelda64Recomp  
-Upstream build guide: https://github.com/Mr-Wiseguy/Zelda64Recomp/blob/main/BUILDING.md (path may differ slightly by branch — open **BUILDING.md** in the tree you pin).
-
-## Add the engine (pick a commit first)
+After cloning, open **`BUILDING.md`** or **`README.md`** at the submodule root (exact filename varies by upstream branch) for RT64, dependencies, and the Windows CMake / Visual Studio flow.
 
 From repo root:
 
@@ -13,7 +11,7 @@ From repo root:
   cd ../..
   git submodule update --init --recursive
 
-Then follow **BUILDING.md** for RT64, third-party submodules, and the Windows CMake/VS flow.
+Then follow **BUILDING.md** / **README.md** at the submodule root for RT64, third-party submodules, and the Windows CMake/VS flow.
 
 ## AeroAssault64 repo context
 
