@@ -1,0 +1,6 @@
+/* Referenced from asm but missing from undefined_funcs_auto.txt after last split — name = address convention. */
+func_83000000 = 0x83000000;
+func_83003CF0 = 0x83003CF0;
+func_83FBFDCC = 0x83FBFDCC;
+func_81BC3318 = 0x81BC3318;
+func_83F800C0 = 0x83F800C0;

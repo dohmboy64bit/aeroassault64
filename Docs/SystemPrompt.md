@@ -41,7 +41,7 @@ project-root/
 
 - Never edit generated recomp code under `RecompiledFuncs/`.
 - Use the **Visual Studio debugger** against the final Windows PE build.
-- **Ghidra:** ask the project owner for help or review before large Ghidra-only analysis or script-driven workflows; do not silently guess memory maps or calling conventions.
+- **Ghidra:** treat the **Ghidra database** (and your notes from it) as the **primary evidence** for ROM↔address mapping, segment boundaries, data vs code, and symbol names — use it **instead of guessing** from splat output alone when anything matters (tail **`post_data`**, **`rodata`** cuts, **`bss`**, IPL3). Ask the project owner for help or review before large Ghidra-only analysis or script-driven workflows; align **`config/symbol_addrs.txt`** / **`config/splat.yaml`** with what you actually see in Ghidra.
 - Use **Capstone** (or equivalent) for advanced disassembly when static text output is not enough.
 - Engine code must not depend on game logic.
 - Document material changes in `Docs/` (see below).
@@ -103,9 +103,9 @@ Keep `Docs/` current as the project grows: at minimum **`Workflow.md`**, **`Arch
 
 The live splat 0.40 config is **`config/splat.yaml`**. It was bootstrapped with `python3 -m splat create_config roms/afa.n64.us.z64` (see [splat Quickstart](https://github.com/ethteck/splat/wiki/Quickstart)), then paths were adjusted for `base_path: ..` so `target_path`, `build/`, and `config/symbol_addrs.txt` resolve from the repo root. A first successful split was run with:
 
-`python3 -m splat split config/splat.yaml` (from repo root, in WSL).
+`python3 -m splat split config/splat.yaml` (from repo root, in WSL). **2026-05-13:** same command re-verified after Phase 3 yaml (`rodata` @ `0x52B90`, `asm` splits); **Windows** `python -m splat split` also used for iteration.
 
-**Layout note:** splat named the boot blob **`ipl3`** as `type: bin` at `0x40` (not hand-written `boot`/`code` at `0x80000040`). Reconcile IPL3 vs main code VRAM in Ghidra with the project owner before treating segment names or the trailing `unknown` tail as final.
+**Layout note:** splat named the boot blob **`ipl3`** as `type: bin` at `0x40` (not hand-written `boot`/`code` at `0x80000040`). Reconcile IPL3 vs main code VRAM in Ghidra with the project owner before treating segment names as final. **Phase 3 update:** ROM **`0x57D20+`** is folded into **`main`** as **`post_data`** `asm`; **`bss`** VMA in `config/splat.yaml` was moved past that ROM span so `.text` and `.bss` do not overlap in the generated linker script — see **`Docs/Workflow.md`** Phase 3 for the bootstrap vs linker distinction.
 
 ### `config/symbol_addrs.txt` (splat style)
 

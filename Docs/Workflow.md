@@ -8,12 +8,20 @@ This file tracks **phase order** from `Docs/SystemPrompt.md`. Do not skip phases
 |-------|-------------|--------|
 | 1 | Environment setup | **Complete** |
 | 2 | ROM + Ghidra | **Complete** |
-| 3 | `splat.yaml` / split | Ghidra done — extend **`main`** past **`0x57D20`** (tail was `bin`) |
-| 4 | ELF (WSL / splat) | Not started |
+| 3 | `splat.yaml` / split | **In progress** — **`rodata`** subdivided **0x52B90…0x57A60** per **splat 0.40.0** split stdout (extra nops @ VRAM **0x80251BE0**); **`asm`** splits ROM **`< 0x4C050`**; **`post_data`** single **`asm`** from **`0x57D20`** (tail splits still rejected: VRAM order vs **`bss`**); **`splat split`** OK |
+| 4 | ELF (WSL / splat) | **Smoke complete (2026-05-13)** — root **`Makefile`** / **`make verify`**: `mips-linux-gnu-as` / `mips-linux-gnu-ld`, **`--oformat elf32-tradbigmips`** (`mips-linux-gnu-objdump -i`), **`build/splat_extern.ld`** via **`tools/gen_splat_extern_ld.py`** + **`config/link_extern_additions.txt`**. **`57D20.bss.o`** excluded on purpose: splat emits **`asm/data/57D20.bss.s`** but the linker script never pulls it in — those **`D_*`** labels sit at **0x80256D70+**, i.e. the same VRAM span as **`post_data.o(.text)`**, so a linear ELF cannot place that **`.bss`** blob without overlapping **`.main`**. Default **`--allow-multiple-definition`**: **`post_data`** vs **`800000.bss`** duplicate **`func_*`** until **`make dedupe-bss`** + **`make LINK_STRICT=1`** (see **`tools/dedupe_post_data_bss.py`**). **`pref`→`nop`**: **`asm/post_data.s`** only (GNU **`as`** + **`-march=vr4300`** rejects **`pref`**; MIPS IV opcode — see VR4300 / binutils docs). |
 | 5 | N64Recomp | Not started |
 | 6 | Engine + patches | Not started |
 | 7 | CMake → Windows PE | Not started |
 | 8 | Test / stabilize | Not started |
+
+---
+
+## What to remember (`splat split` → dedupe → link)
+
+- **`asm/`** is in **`.gitignore`** (splat output). **`splat split`** regenerates **`asm/data/800000.bss.s`** and the rest of **`asm/`**; **`tools/dedupe_post_data_bss.py`** changes are **not preserved** across a split until you run dedupe again.
+- **Strict link (no `--allow-multiple-definition`):** after **`splat split`**, build **`build/asm/post_data.o`** (**`make build/asm/post_data.o`**), run **`make dedupe-bss`**, then **`make LINK_STRICT=1 verify`**. Default **`LINK_STRICT=0`** in the **`Makefile`** keeps **`--allow-multiple-definition`** so **`make verify`** still works before dedupe on a clean tree.
+- **References:** **`tools/dedupe_post_data_bss.py`**, **`tools/README.txt`**, **`Makefile`** (`dedupe-bss`, **`LINK_STRICT`**).
 
 ---
 
@@ -29,7 +37,7 @@ Complete these on your machine; check boxes as you go. **Do not invent tool vers
 - **Visual Studio:** **2022 Community** with VC tools present at `C:\Program Files\Microsoft Visual Studio\2022\Community` (`vswhere` with `Microsoft.VisualStudio.Component.VC.Tools.x86.x64`).
 - **WSL repo path:** `/mnt/e/AeroAssault64` reachable from default distro.
 - **ROM on disk:** `roms/afa.n64.us.z64` present; SHA1 **6742F67D7D2639072E186D240237BE1C662CB25A** matches `config/splat.yaml`.
-- **splat split smoke test (2026-05-13):** from repo root in WSL, `python3 -m splat split config/splat.yaml` completed (emits `asm/`, `build/`, `assets/*.bin`, `include/` — see `.gitignore` for what stays out of git).
+- **splat split smoke test (2026-05-13):** from repo root in WSL, `python3 -m splat split config/splat.yaml` completed (emits `asm/`, `build/`, `assets/*.bin`, `include/` — see `.gitignore` for what stays out of git). **Update (same day):** re-run after Phase 3 `rodata` + `asm` subsegment expansion — still **exit 0** (splat **0.40.0**).
 - **LLVM/Clang (Windows):** `winget` package **LLVM.LLVM** is installed; **`C:\Program Files\LLVM\bin\clang.exe`** reports **clang version 22.1.5** (target **x86_64-pc-windows-msvc**). Add that directory to **PATH** (user or system) if a new PowerShell session does not resolve `clang`.
 - **N64Recomp / RSPRecomp (Windows):** `tools/N64Recomp.exe` and `tools/RSPRecomp.exe` built from [Mr-Wiseguy/N64Recomp](https://github.com/Mr-Wiseguy/N64Recomp) @ **81213c1831fab2521a6a5459c67b63437d67e253** (MSVC Release). Run `.\tools\N64Recomp.exe` from PowerShell with a `.toml` per upstream docs.
 
@@ -88,7 +96,7 @@ Do this **before** changing `config/splat.yaml` for “final” layout or invest
 | ROM file (local) | `roms/afa.n64.us.z64` |
 | SHA1 | `6742f67d7d2639072e186d240237be1c662cb25a` (must match `config/splat.yaml`) |
 | Prior notes (re-verify) | VRAM **0x80200050** — entry / `ramMain`; **`g_BuildString`** VRAM **0x802F5E58**, ROM **0x00F6E08** (`Docs/SystemPrompt.md`) |
-| splat draft (reconcile) | `config/splat.yaml` — `ipl3` @ ROM **0x40** (`bin`); **`entry`** ROM **0x1000** VRAM **0x80200050** (`hasm`); **`main`** from ROM **0x1050**; tail `bin` from **0x57D20**; last line **`[0x800000]`** (full ROM tail still “unknown” to splat until segments are filled) |
+| splat draft (reconcile) | `config/splat.yaml` — `ipl3` @ ROM **0x40** (`bin`); **`entry`** ROM **0x1000** VRAM **0x80200050** (`hasm`); **`main`** from ROM **0x1050**; **`data`** @ **0x4C050**; **`rodata`** @ **0x52B90**; **`post_data`** `asm` @ **0x57D20**–**0x7FFFFF**; **`bss`** linker VMA **0x8027F050**; **`[0x800000]`** end marker |
 
 ### ROM ↔ splat map (use while in Ghidra)
 
@@ -99,10 +107,11 @@ These offsets come from the **committed** `config/splat.yaml` (splat **0.40** la
 | `header` | **0x0** | (header blob) | 0x40-byte cart header |
 | `ipl3` | **0x40** | *(bin only in split — no asm)* | IPL3 cartridge blob; decide in Ghidra how you want to map or skip it |
 | `entry` | **0x1000** | **0x80200050** | `hasm` → see `asm/1000.s` (`entrypoint`) |
-| `main` (`.text`) | **0x1050** | **0x802000A0** (first insn after entry chunk) | `follows_vram: entry` |
-| `main` (`data`) | **0x4C050** | continues after `.text` in VRAM | Check `asm/data/4C050.data.s` |
-| `main` (`bss`) | *(none in ROM)* | **0x80256D70** per yaml | BSS size **0x306C0** |
-| trailing `bin` | **0x57D20** | follows `main` VRAM | Unknown tail until you label it |
+| `main` (`.text`, split) | **0x1050** … **0x4BEF0** (many **`asm`** files) | **0x802000A0** + linear offset from **`0x1050`** | See `asm/*.s` named by ROM start (splat file-split hints). |
+| `main` (`data`) | **0x4C050** | `rom_to_ram(0x4C050)` | `asm/data/4C050.data.s` |
+| `main` (`rodata`) | **0x52B90** | `rom_to_ram(0x52B90)` | `asm/data/52B90.rodata.s`; splat may warn this block is referenced from many `.text` files (expected). |
+| `main` (`post_data` `.text`) | **0x57D20** … **0x7FFFFF** | **`0x80256D70`** at ROM **0x57D20** (same linear rule) | Single `post_data.s` — see Phase 3 for why tail is not split further. |
+| `main` (`bss`, linker) | *(none in ROM)* | **`0x8027F050`** | **`bss_size: 0x853E0`** — linker bookkeeping vs runtime **`ramMain`** clear from **`0x80256D70`** (Phase 2 table + Phase 3 note). |
 | end marker | **0x800000** | — | Full ROM size |
 
 **Reading splat asm for cross-check:** In `asm/1000.s`, each disassembled line uses the form `/* <ROM> <VRAM> <word> */` — e.g. `/* 1000 80200050 3C088025 */` means ROM **0x1000**, VRAM **0x80200050**. Use that to sanity-check that your Ghidra image’s ROM offset ↔ address mapping matches splat before you trust auto-analysis.
@@ -128,19 +137,41 @@ Work in a **non-shared** Ghidra project so imports and memory blocks stay under 
 
 | Question | Your answer (VRAM / ROM / notes) |
 |----------|----------------------------------|
-| Confirmed entry / init address | **Ghidra `.ram`:** **`ramMain()`** @ **`80200050`**, marked **Entry Point**. Prologue: **`lui t0, 0x8025`** + **`addiu t0, 0x6d70`** → **`t0 = 0x80256D70`**; loop clears words from that address (BSS zero); then **`jr t2 => FUN_80231150`**. So **entry = `0x80200050`**, **first real game routine = `0x80231150`**, **BSS base = `0x80256D70`** — matches **`config/symbol_addrs.txt`** (`entrypoint`, `main`) and **`config/splat.yaml`** (`entry` VRAM **`0x80200050`**, `main` follows, **`bss` vram `0x80256D70`**, **`bss_size: 0x306C0`**). Ghidra block span **`80200050`–`809ff04f`** is the analyzer’s RAM window (not necessarily full hardware RAM). |
+| Confirmed entry / init address | **Ghidra `.ram`:** **`ramMain()`** @ **`80200050`**, marked **Entry Point**. Prologue: **`lui t0, 0x8025`** + **`addiu t0, 0x6d70`** → **`t0 = 0x80256D70`**; loop clears words from that address (BSS zero); then **`jr t2 => FUN_80231150`**. So **entry = `0x80200050`**, **first real game routine = `0x80231150`**, **BSS clear base = `0x80256D70`** — matches **`config/symbol_addrs.txt`** (`entrypoint`, `main`) and **`config/splat.yaml`** (`entry` VRAM **`0x80200050`**, `main` follows). **Phase 3 linker note:** splat **`main`** **`bss`** subsegment is **`vram: 0x8027F050`** (see Phase 3 section) so **`post_data`** `.text` at **`0x80256D70`** does not overlap **`.bss`** in the generated script; **`bss_size: 0x853E0`** keeps the same nominal **`.bss`** span end as the old **`0x306C0`** layout. Ghidra block span **`80200050`–`809ff04f`** is the analyzer’s RAM window (not necessarily full hardware RAM). |
 | `g_BuildString` (or correction) | **VRAM `802f5e58`:** `ds "Aero Fighters Assault v0.93 built on %s..."` — confirms prior **`g_BuildString`** @ **0x802F5E58** in `config/symbol_addrs.txt` / `Docs/SystemPrompt.md`. **Also listed @ `b00f6e08`** in Ghidra (same string); treat as ROM/file-backed view of the same data — cross-check against documented ROM **0x00F6E08** and your loader’s block naming. |
 | ROM header / `.rom` cart image | **Confirmed by `tools/ghidra/Phase2_Closeout_Report.py` (Ghidra 12 / PyGhidra):** **`Magic`** `80371240`, **`Load_Address`** `0x80200050`, **`Release_Offset`** `0x00001447`, **`CRC1/CRC2`** `1B598BF1` / `ECA29B45`, title **`AERO FIGHTERS ASSAUL…`** @ **`0x20`**. **`Release_Offset`** is **not** the same numeric value as splat’s **`entry` @ ROM `0x1000`** — interpret **`0x0C`** using [N64brew — ROM](https://n64brew.dev/wiki/ROM) (or your loader’s field names); do not rename the field without that doc. |
 | IPL3 region ROM **0x40**–**0xFFF** description | **Ghidra `.boot`:** `bootMain()` at **`a4000040`**–**`a4000fff`** (block comment *ROM bootloader*). Opcodes are real MIPS: **COP0** (`mtc0`), **RI/MI/RDRAM** MMIO (`0xA3F0…`, `0xA3F8…`), stack in DMEM, **`jal`** to helpers, loops with **`cache`**, ends **`jr t4 => TLB_REFILL`**. That matches **IPL3 / PIF bootstrap** running in **SP DMEM** (**`0xA4000000`** region), not KSEG0 game RAM. **Cart ROM `0x40`–`0xFFF`** is this blob; splat **`ipl3` `bin`** is still the right shape for splitting **game** code at **`0x1000`**. |
 | Main `.text` ROM/VRAM range | *(still refine bounds / rodata — Ghidra confirms entry handoff only)* **VRAM:** entry stub **`0x80200050`**, transfer to **`main` @ `0x80231150`** per `jr` above. **ROM:** splat still has **`entry`** @ **`0x1000`**, **`main` .text** from **`0x1050`** (`config/splat.yaml`). |
 | `.data` / `.rodata` / `.bss` boundaries (best effort) | **Script @ ROM `0x4C050`:** first word **`0x00000000`** (no code unit in `.rom` — consistent with **BSS / padding / template** in cart image, not proof that splat’s **`data`** split is wrong). **RAM:** **`g_BuildString`** is **`ds`** at **`0x802F5E58`**; **`0x80256D70`** shows **`undefined4`** matching first stack pattern from **`ramMain`** (BSS region). **Rodata vs `.data`:** still refine in Ghidra by following **xrefs from code** into **`.rom`** if you need a sharper split than **`0x4C050`**. |
-| ROM **0x57D20**+ until **0x800000** | **At `b0057d20` (= ROM `0x57D20`):** bytes **`27 bd ff 98`** decode to MIPS **`addiu sp, sp, -0x68`** (I-type `addiu` / stack frame). Following **`af bf 00 1c`**, **`af a4 00 68`**, **`af a5 00 6c`** are consistent with **`sw`** prologue stores. So this is **live MIPS `.text`**, not padding — Ghidra shows **`??`** only because **`.rom`** has not created a **code** unit there yet. **Bytes just above (`b0057d14`–`b0057d1f`):** still ambiguous (could be tail **data**, **padding**, or **mixed**); worth a few words when you label them. **Phase 3 implication:** splat currently ends **`main`** then uses a trailing **`bin`** from **`0x57D20`** (`config/splat.yaml`); you likely need another **`asm`** (or extended **`main`** subsegment) so **`0x57d20+`** is split as **code** until you hit real padding/assets — **verify with another `splat split` after yaml edits** ([splat General Workflow](https://github.com/ethteck/splat/wiki/General-Workflow)). |
-| Disagreements vs current `config/splat.yaml` | **IPL3 / entry / main / BSS / header CRCs:** aligned with Ghidra + script. **`Release_Offset` `0x1447`:** document meaning from ROM wiki — **do not equate to `0x1000`** without that doc. **Tail @ ROM `0x57D20`:** **MIPS** there → **Phase 3** yaml change (**`bin` → `asm` / extend `main`**) then re-split. |
+| ROM **0x57D20**+ until **0x800000** | **At `b0057d20` (= ROM `0x57D20`):** bytes **`27 bd ff 98`** decode to MIPS **`addiu sp, sp, -0x68`** (I-type `addiu` / stack frame). Following **`af bf 00 1c`**, **`af a4 00 68`**, **`af a5 00 6c`** are consistent with **`sw`** prologue stores. So this is **live MIPS `.text`**, not padding — Ghidra shows **`??`** only because **`.rom`** has not created a **code** unit there yet. **Bytes just above (`b0057d14`–`b0057d1f`):** still ambiguous (could be tail **data**, **padding**, or **mixed**). **Repo status:** `config/splat.yaml` has **`[0x57D20, asm, post_data]`** under **`main`** (see [splat General Workflow](https://github.com/ethteck/splat/wiki/General-Workflow)). |
+| Disagreements vs current `config/splat.yaml` | **IPL3 / entry / main / header CRCs:** aligned with Ghidra + script. **`Release_Offset` `0x1447`:** document meaning from ROM wiki — **do not equate to `0x1000`** without that doc. **`bss`** linker VMA vs **`ramMain`** clear base: documented in Phase 3 (not a hardware disagreement — a splat linker choice). |
 
 ### Phase 2 exit
 
 - [x] Findings log completed; **Phase2_Closeout_Report.py** run in Ghidra 12 (PyGhidra) matches header, RAM symbols, and ROM **`0x57D20`** / **`0x4C050`** checks above.
 - [x] **Phase status:** ROM + Ghidra → **Complete**; next is **Phase 3–4** (`config/splat.yaml` + ELF).
+
+---
+
+## Phase 3 — `splat.yaml` and `splat split`
+
+**Goal:** match the ROM layout to Ghidra-backed facts while keeping splat’s linker model self-consistent ([splat General Workflow](https://github.com/ethteck/splat/wiki/General-Workflow), [Quickstart](https://github.com/ethteck/splat/wiki/Quickstart)).
+
+### Done in repo (2026-05-13)
+
+- **`config/splat.yaml`:** tail ROM **`0x57D20+`** is **`[0x57D20, asm, post_data]`** under **`main`** (MIPS at **`b0057d20`**, Ghidra Phase 2).
+- **`rodata`:** single **`[0x52B90, rodata]`** → **29** additional **`rodata`** subsegments (**`0x52BC0`** … **`0x57A60`**) from **`python3 -m splat split`** stdout (“Segment 52B90…” / file split suggestions). **`0x58080+`** `asm` hints in that block were **not** applied (would duplicate existing **`main`** `asm` list). Re-run split + **`make`** after yaml change: **exit 0**.
+- **`asm` file splits:** all addresses splat printed for segment **`1050`** with ROM **`< 0x4C050`** are listed as separate **`asm`** subsegments (same heuristic as splat stdout). **Not** applied to ROM **`≥ 0x57D20`:** each subsegment’s **`vram_start`** is **`rom_to_ram(start)`** on the parent segment (see splat **`segtypes/common/code.py`**, splat **0.40.0** — `vram = self.get_most_parent().rom_to_ram(start)` when building subsegments). Splitting **`post_data`** at e.g. **`0x7DE0B0`** gives a **text** **`vram_start`** around **`0x809DD100`**, which is **greater** than explicit **`bss`** at **`0x8027F050`**, so splat errors with **ascending vram order** (`code.py` check at **`segment.vram_start < prev_vram`**). Keeping **one** **`post_data`** `asm` keeps **`bss`** after **`0x80256D70`** text as intended for this linker hack.
+- **BSS / VRAM:** unchanged from prior Phase 3 write-up — **`bss`** @ **`0x8027F050`**, **`bss_size: 0x853E0`**, vs Ghidra runtime clear from **`0x80256D70`**.
+- **Verification:** `python -m splat split config/splat.yaml` and `python3 -m splat split config/splat.yaml` from repo root completed with exit code **0** on **Windows (PowerShell)** and **WSL** respectively (**2026-05-13**); splat **0.40.0** / spimdisasm **1.40.3**. **Ghidra:** run **`tools/ghidra/Phase3_Closeout_Report.py`** (PyGhidra; see **`tools/ghidra/README.txt`**) and paste conclusions into the Phase 3 findings / Workflow table — keep **`RODATA_ROM_SPLITS`** in that script aligned with **`config/splat.yaml`**.
+- **`Phase3_Closeout_Report.py` (user run, PyGhidra):** **B** — xrefs to **`.rom`** rodata starts are **0** (expected: consumers use **`.ram`** KSEG0). **C** — tail **`.rom`** listing mix (use extra NOTE when **`.ram`** at **`0x80256D70`** is already code). **D** — **ROM 0x57D20** MIPS prologue. **E** — **`0x8027F050`**: often unlabeled **`??`**. **F** — **`0x80256D70`**: use **`Phase3_Ensure_PostData_Function.py`** until **`FUN_80256d70`** / real instruction appears in **`.ram`**. **G** — high VRAM **`func_*`** candidates vs **`??`** in Ghidra vs splat **`post_data`** / **`800000.bss`** (see **`tools/dedupe_post_data_bss.py`** + **`LINK_STRICT`**).
+
+### Still to do before closing Phase 3
+
+- [x] Reconcile **`post_data`** vs **`800000.bss`**: **`tools/dedupe_post_data_bss.py`** (uses **`mips-linux-gnu-readelf -s`** on **`post_data.o`** per binutils **readelf(1)**, same line shape as **`tools/gen_splat_extern_ld.py`**) strips **`nonmatching`+`glabel`/`dlabel`+`.space`** / **`.comm`** in **`asm/data/800000.bss.s`** when the symbol is already GLOBAL in **`post_data.o`**. **`make dedupe-bss`** then **`make LINK_STRICT=1 verify`** completes without **`--allow-multiple-definition`** (verified **2026-05-13** WSL). Re-run dedupe after each **`splat split`** (regenerated **`800000.bss.s`**). **`asm/data/57D20.bss.s`** stays excluded from the link per **`Makefile`**.
+- [ ] Optionally validate **`rodata`** split boundaries in Ghidra (xrefs from **`.text`** into **`.rom`** **0x52B90–0x57D20**); adjust **`config/splat.yaml`** if a boundary cuts a table.
+
+**Completed from this backlog (2026-05-13):** subdivided **`rodata`** per splat stdout (**`0x52BC0`** … **`0x57A60`**); smoke **`make`** / **`make verify`** still green after re-split.
 
 ---
 
