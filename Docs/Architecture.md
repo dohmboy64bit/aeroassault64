@@ -12,3 +12,5 @@ High-level layout matches `Docs/SystemPrompt.md`:
 - **`roms/`** — Local ROM copies (gitignored).
 
 Fill this document with dependency diagrams and data flow once the engine submodule exists and the first ELF is produced.
+
+**Current state (repo):** Phases **1–5** are smoke-complete — MIPS ELF via **`Makefile`** / splat (**`make strict-verify`** ends with **`elf-sanity`**), N64Recomp TOML under **`config/`**. **Phase 6** wires **`lib/`** + **`src/`** + **`patches/`** (see **`Docs/Workflow.md`** § Phase 6); **`RecompiledFuncs/`** stays generated-only.

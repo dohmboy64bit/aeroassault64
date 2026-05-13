@@ -9,9 +9,9 @@ This file tracks **phase order** from `Docs/SystemPrompt.md`. Do not skip phases
 | 1 | Environment setup | **Complete** |
 | 2 | ROM + Ghidra | **Complete** |
 | 3 | `splat.yaml` / split | **Complete** — **`rodata`** subdivided **0x52B90…0x57A60** per **splat 0.40.0** split stdout (extra nops @ VRAM **0x80251BE0**); **`asm`** splits ROM **`< 0x4C050`**; **`post_data`** single **`asm`** from **`0x57D20`** (tail splits still rejected: VRAM order vs **`bss`**); **`splat split`** OK; **`post_data`** vs **`800000.bss`** handled via **`tools/dedupe_post_data_bss.py`** + **`LINK_STRICT`** (see **What to remember**). *Optional follow-up:* Ghidra xrefs to validate **`rodata`** boundaries (**`Docs/Workflow.md`** “Still to do”). |
-| 4 | ELF (WSL / splat) | **In progress** — smoke **`make` / `make verify`** done; formal Phase 4 checklist and **`make strict-verify`** in **`Docs/Workflow.md`** § Phase 4. **Phase 5** reads the same ELF via **`config/aerofighters_assault.n64recomp.toml`**. |
+| 4 | ELF (WSL / splat) | **Complete (smoke)** — **`make` / `make verify`** / **`make strict-verify`** (now runs **`make elf-sanity`**); **`build/aerofighters_assault.elf`** matches **`config/splat.yaml`** **`elf_path`**. Re-run **`make strict-verify`** after each **`splat split`**. |
 | 5 | N64Recomp | **Smoke-complete** — **`config/aerofighters_assault.n64recomp.toml`** drives **`tools/N64Recomp.exe`** to exit **0** (outputs under **`RecompiledFuncs/`**, gitignored except **`README.txt`**). Hand-tuned **`[[patches.instruction]]`** + **`stubs`** (COP0 / **`cache`** / jump-table limits per N64Recomp **`src/main.cpp`**, **`recompilation.cpp`**, **`analysis.cpp`**); extend with **`python tools/n64recomp_stub_until_green.py`** after **`splat split`**. |
-| 6 | Engine + patches | Not started |
+| 6 | Engine + patches | **Scaffolded** — **`lib/README.txt`**, **`src/README.txt`**, **`patches/README.txt`**; add **`lib/Zelda64Recomp`** submodule when a revision is chosen; first root **CMake** + Windows PE per engine **BUILDING.md** (see **`Docs/Debugging.md`**). |
 | 7 | CMake → Windows PE | Not started |
 | 8 | Test / stabilize | Not started |
 
@@ -190,20 +190,21 @@ Work in a **non-shared** Ghidra project so imports and memory blocks stay under 
 |------|---------|
 | Regenerate asm / ld | **`make split`** or **`python3 -m splat split config/splat.yaml`** |
 | Default smoke ELF | **`make`** then **`make verify`** (**`LINK_STRICT=0`** — permissive **`ld`**) |
-| Strict link + verify | **`make strict-verify`** (runs **`dedupe-bss`**, then links with **`LINK_STRICT=1`**) — same as **What to remember** |
+| Strict link + verify + entry check | **`make strict-verify`** ( **`dedupe-bss`**, **`LINK_STRICT=1` `verify`**, then **`elf-sanity`**) — same as **What to remember** |
+| Entry / MIPS header only | **`make elf-sanity`** (requires existing **`$(ELF)`**) |
 
 ### Phase 4 checklist
 
 - [x] Root **`Makefile`**: assemble **`asm/**/*.s`**, **`post_data`** **`pref`→`nop`**, **`build/splat_extern.ld`** from **`tools/gen_splat_extern_ld.py`**, link **`-e entrypoint`** **`--oformat elf32-tradbigmips`**.
 - [x] **`make verify`** reads **`mips-linux-gnu-readelf -h`** (Type / Machine / Entry / Flags).
 - [x] **`tools/dedupe_post_data_bss.py`** + **`make dedupe-bss`**; **`LINK_STRICT=1`** link verified (**2026-05-13**).
-- [ ] Run **`make strict-verify`** after each **`splat split`** before trusting multiply-defined cleanliness (regenerates **`800000.bss.s`** — see **What to remember**).
-- [ ] **ELF sanity:** confirm **`Entry point address`** matches splat entry (**`0x80200050`**) and **`Machine: MIPS R3000`** / **o32** flags match your toolchain; optional **`readelf -S`** / **`nm`** spot-checks vs Ghidra segment notes.
+- [ ] Run **`make strict-verify`** after each **`splat split`** before trusting multiply-defined cleanliness (regenerates **`800000.bss.s`** — see **What to remember**). *(**`strict-verify`** now ends with **`make elf-sanity`** — entry **80200050** + MIPS **readelf** line.)*
+- [x] **ELF sanity:** **`make elf-sanity`** (after **`$(ELF)`** exists) checks **`mips-linux-gnu-readelf -h`** for entry **0x80200050** and a **MIPS** machine string — same entry as **`config/symbol_addrs.txt`** / **`Makefile`** **`-e entrypoint`**. Optional **`readelf -S`** / **`nm`** spot-checks vs Ghidra remain manual.
 - [x] **Handoff to Phase 5:** **`config/splat.yaml`** **`elf_path: build/aerofighters_assault.elf`** — game TOML is **`config/aerofighters_assault.n64recomp.toml`** for **`tools/N64Recomp.exe`** (see **`tools/README.txt`** Phase 5 and N64Recomp **`src/config.cpp`** @ commit pinned in **`tools/README.txt`**); output only under **`RecompiledFuncs/`**.
 
 ### Phase 4 exit criteria
 
-Phase **4** is **done** when: strict path is documented and repeatable (**`make strict-verify`** green after a fresh **`splat split` + dedupe**), ELF header checks out against **`config/symbol_addrs.txt`** / Ghidra entry, and you are ready to commit a first **N64Recomp** config run (Phase **5**).
+Phase **4** is **closed at smoke level** when: **`make strict-verify`** is documented and repeatable (includes **`elf-sanity`**), and Phase **5** can consume **`build/aerofighters_assault.elf`**.
 
 ---
 
@@ -233,6 +234,31 @@ Phase **4** is **done** when: strict path is documented and repeatable (**`make 
 
 ---
 
-## Later phases (Phase 6+)
+## Phase 6 — Engine integration (`lib/`, `src/`, `patches/`)
 
-- **Phase 6–8:** `lib/` engine, `src/`, `patches/`, CMake PE, VS debugger — see `Docs/Debugging.md`.
+**Goal:** submodule or vendor the reusable runtime (**[Zelda64Recomp](https://github.com/Mr-Wiseguy/Zelda64Recomp)** preferred per **`lib/README.txt`**), add thin game glue under **`src/`**, and keep overrides under **`patches/`** — see **`Docs/SystemPrompt.md`** layers table.
+
+### Prerequisites
+
+- Phase **4** ELF + Phase **5** smoke recomp path understood (**`Docs/Workflow.md`** § 4–5).
+- Pick an engine **git revision** to pin (record in **`lib/README.txt`** or a future **`lib/.gitmodules`** comment when the submodule lands).
+
+### Commands / files
+
+| Step | Notes |
+|------|--------|
+| Add engine | **`git submodule add … lib/Zelda64Recomp`** (exact URL in **`lib/README.txt`**) |
+| Game layer | Empty tree for now — read **`src/README.txt`** and **`patches/README.txt`** |
+| Debug | **`Docs/Debugging.md`** — Visual Studio against the engine-generated **Windows PE** once CMake exists |
+
+### Phase 6 checklist
+
+- [ ] **`lib/Zelda64Recomp`** (or chosen fork) present; **`git submodule update --init --recursive`** documented.
+- [ ] Root or in-tree **CMake** that builds the port + links **`RecompiledFuncs/`** output (regenerated locally; not committed except **`README.txt`** / **`.gitkeep`**).
+- [ ] First **PowerShell** / **VS** run of the game binary (even if it exits early) — capture breakpoints and logging notes in **`Docs/Debugging.md`**.
+
+---
+
+## Later phases (Phase 7+)
+
+- **Phase 7–8:** Harden CMake, CI, test matrix — extend **`Docs/Debugging.md`** and **`Docs/Workflow.md`** as you add targets.

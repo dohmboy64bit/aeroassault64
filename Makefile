@@ -2,7 +2,7 @@
 # Prerequisite: from repo root run `python3 -m splat split config/splat.yaml` so asm/, assets/ipl3.bin, and build/*.ld exist.
 # See Docs/Workflow.md and https://github.com/ethteck/splat/wiki/General-Workflow
 
-.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp
+.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity
 
 .DEFAULT_GOAL := all
 
@@ -15,6 +15,7 @@ ELF          := build/aerofighters_assault.elf
 MIPS_PREFIX  ?= mips-linux-gnu-
 AS           := $(MIPS_PREFIX)as
 LD           := $(MIPS_PREFIX)ld
+READELF      := $(MIPS_PREFIX)readelf
 
 # Match splat / N64 o32: VR4300 + 32-bit ABI (see splat General Workflow — mips-linux-gnu-as).
 # `post_data.s` is special: spimdisasm emits `pref`; GNU as rejects `pref` with -march=vr4300 (MIPS III).
@@ -41,8 +42,14 @@ ALL_OBJS     := $(ASM_OBJS) $(IPL3_OBJ) build/asm/post_data.o
 all: check-split $(ELF)
 
 verify: $(ELF)
-	@mips-linux-gnu-readelf -h $(ELF) | grep -E 'Type:|Machine:|Entry|Flags:'
+	@$(READELF) -h $(ELF) | grep -E 'Type:|Machine:|Entry|Flags:'
 	@echo "OK: $(ELF)"
+
+# Phase 4: assert ELF header matches splat entry (0x80200050) and MIPS (binutils readelf -h).
+elf-sanity: $(ELF)
+	@$(READELF) -h $(ELF) | grep -q '80200050' || (echo "elf-sanity: entry must contain 80200050 (see config/symbol_addrs.txt entrypoint)"; exit 1)
+	@$(READELF) -h $(ELF) | grep -qi 'mips' || (echo "elf-sanity: Machine line must mention MIPS"; exit 1)
+	@echo "OK: elf-sanity $(ELF)"
 
 split:
 	$(SPLAT) split $(SPLIT_CFG)
@@ -54,6 +61,7 @@ dedupe-bss: build/asm/post_data.o
 # Phase 4: dedupe `800000.bss.s` then link with single-definition rules (see Docs/Workflow.md § Phase 4).
 strict-verify: dedupe-bss
 	$(MAKE) LINK_STRICT=1 verify
+	$(MAKE) elf-sanity
 
 # Phase 5 (Windows PE): requires `tools/N64Recomp.exe` and a built `$(ELF)`.
 # From WSL this often works via Windows interop; otherwise run from PowerShell (see tools/README.txt).
