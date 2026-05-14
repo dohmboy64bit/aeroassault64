@@ -1,7 +1,7 @@
 Engine submodule (**tracked**)
 
 Upstream: https://github.com/Mr-Wiseguy/Zelda64Recomp  
-**Branch tracked:** `dev` (see **`.gitmodules`**). **Pinned commit (this repo):** `f1555039a036a6304ddc391d5b3969ae6ca561e2` (`f155503` short).
+**Branch tracked:** `dev` (see **`.gitmodules`**). **Pinned commit (this repo):** `b4e9a3839377f12eabecd884bf8e986ea45817e2` (`b4e9a38` short).
 
 After a fresh clone from repo root:
 
@@ -35,6 +35,8 @@ Then configure with **`-DAEROASSAULT64_NO_MM_ROM=ON`**, for example:
   .\tools\phase6_engine_cmake.ps1 -Mode Configure -NoMmRom
 
 Or repo-root **`cmake --preset engine-superbuild-ninja-release-no-mm`** (forwards the flag via root **`CMakeLists.txt`**). This does **not** replace MM game code under **`src/game/`**; it only satisfies CMake/link for the patch blob and RSP sources documented in **BUILDING.md**.
+
+**Windows full link note:** upstream **`CMakeLists.txt`** fetches the **Visual C++** SDL2 development ZIP and links **MSVC-built** **`freetype.lib`** and DXC/D3D12 paths. A **Ninja + MinGW** configure (e.g. WinLibs GCC) can compile most of the tree but the final **`Zelda64Recompiled.exe`** link often fails on those MSVC artifacts. For a full PE link on Windows, prefer **Visual Studio 2022** (**`cmake -G "Visual Studio 17 2022" -A x64 …`** or preset **`engine-superbuild-vs2022-release`**) per **`lib/Zelda64Recomp/BUILDING.md`**.
 
 Upstream globs MIPS output only under **`${CMAKE_SOURCE_DIR}/RecompiledFuncs`** — see **`lib/Zelda64Recomp/CMakeLists.txt`** **`file(GLOB FUNC_C_SOURCES ${CMAKE_SOURCE_DIR}/RecompiledFuncs/*.c)`** (and **`*.cpp`**). This repo’s N64Recomp TOML writes to **repo-root** **`RecompiledFuncs/`** (**`config/aerofighters_assault.n64recomp.toml`** **`output_func_path = "../RecompiledFuncs"`** relative to **`config/`**, per N64Recomp **`src/config.cpp`** path rules in **`tools/README.txt`**).
 

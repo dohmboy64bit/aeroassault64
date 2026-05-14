@@ -75,6 +75,13 @@ stubs = [
     "func_8027526C",
     "func_8025C6F4",
     "func_8026C1E4",
+    # N64Recomp emitted `goto L_8026FEA4` / `goto L_802700A4` with no labels in `RecompiledFuncs/funcs_13.c`
+    # (`func_8027B894`) — stub until recomp jump-range bug is fixed; see engine full-link attempt 2026-05-13.
+    "func_8027B894",
+    # Same class: `goto L_80258384` / `goto after_0` with truncated body in `RecompiledFuncs/funcs_19.c` (`func_80264010`).
+    "func_80264010",
+    # `goto L_8026C344` with no label in `RecompiledFuncs/funcs_20.c` (`func_80277EA8`); N64Recomp warned branch outside function.
+    "func_80277EA8",
 ]
 
 [[patches.instruction]]
