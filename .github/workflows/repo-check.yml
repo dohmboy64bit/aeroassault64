@@ -26,6 +26,9 @@ jobs:
       - name: N64Recomp game TOML
         run: python3 tools/verify_n64recomp_toml.py
 
+      - name: Phase 6 RecompiledFuncs layout
+        run: python3 tools/verify_phase6_layout.py
+
       - name: py_compile tools/*.py
         run: |
           python3 -m py_compile \
@@ -35,4 +38,5 @@ jobs:
             tools/verify_splat_makefile_sync.py \
             tools/verify_entrypoint_sync.py \
             tools/verify_n64recomp_toml.py \
+            tools/verify_phase6_layout.py \
             tools/gen_splat_extern_ld.py

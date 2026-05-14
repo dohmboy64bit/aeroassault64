@@ -28,6 +28,12 @@ From repo root (PowerShell), once after clone (or whenever the junction is missi
 
 Remove the junction: **`.\tools\phase6_link_recompiledfuncs.ps1 -Remove`**. This does **not** replace **BUILDING.md** steps (RSP **`rsp/*.cpp`**, **`RecompiledPatches/`**, MM **`patches/`** pipeline) — it only aligns **where** the engine CMake looks for **CPU** recomp C sources.
 
+On **Linux / WSL** (no junction), from repo root:
+
+  ln -sfn ../../RecompiledFuncs lib/Zelda64Recomp/RecompiledFuncs
+
+(`samefile` in **`tools/verify_phase6_layout.py`** accepts a symlink to repo-root **`RecompiledFuncs/`**.)
+
 One-time add (already done in this repo; for reference only):
 
   git submodule add -b dev https://github.com/Mr-Wiseguy/Zelda64Recomp.git lib/Zelda64Recomp
