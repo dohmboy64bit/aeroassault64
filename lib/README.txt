@@ -7,6 +7,8 @@ After a fresh clone from repo root:
 
   git submodule update --init --recursive
 
+**Fork commits:** this repo’s **gitlink** may point at commits that are **not** on **`https://github.com/Mr-Wiseguy/Zelda64Recomp.git`** (the URL in **`.gitmodules`**). If **`git submodule update`** fails with “reference is not a tree”, fork **Zelda64Recomp** to your account, push the **`dev`** branch there, and either change **`.gitmodules`** `url` to your fork or add that fork as a second remote in **`lib/Zelda64Recomp`** and fetch before **`submodule update`**.
+
 Then open **`lib/Zelda64Recomp/BUILDING.md`** for RT64, nested submodules, dependencies, and the Windows CMake / Visual Studio flow. Upstream **BUILDING.md** describes **Majora's Mask** (decompressed ROM, `us.rev1.toml`, in-tree N64Recomp/RSPRecomp); **Aero Fighters Assault** still needs a **fork or in-tree adaptation** (TOML, assets, `RecompiledFuncs/` layout, glue under **`src/`**).
 
 ### Configure / build from this repo (Windows)
