@@ -14,6 +14,7 @@
 #
 # Run: Ghidra 12+ with support/pyghidraRun.bat — Script Manager — this file under tools/ghidra.
 # Older Ghidra: MemoryBlock has no getBody(); this script uses AddressRangeImpl + AddressSet instead.
+# PyGhidra: getReferencesFrom may return Reference[] (no hasNext) — see _iter_references_from().
 #
 #@runtime PyGhidra
 #@category AeroAssault64
@@ -55,6 +56,43 @@ def memory_block_as_address_set(block):
     aset = AddressSet()
     aset.add(AddressRangeImpl(block.getStart(), block.getEnd()))
     return aset
+
+
+def _iter_listing_cursor(cursor):
+    """
+    Ghidra Listing iterators use hasNext()/next(). PyGhidra may instead expose a Java array
+    or Python sequence — iterate both shapes.
+    """
+    if cursor is None:
+        return
+    if hasattr(cursor, "hasNext") and callable(getattr(cursor, "hasNext", None)):
+        while cursor.hasNext():
+            yield cursor.next()
+        return
+    try:
+        for item in cursor:
+            yield item
+    except TypeError:
+        pass
+
+
+def _iter_references_from(ref_mgr, addr):
+    """
+    ReferenceManager.getReferencesFrom(Address) returns ReferenceIterator on some Ghidra builds
+    and Reference[] (Java array) on others — PyGhidra exposes the latter without hasNext().
+    """
+    refs = ref_mgr.getReferencesFrom(addr)
+    if refs is None:
+        return
+    if hasattr(refs, "hasNext") and callable(getattr(refs, "hasNext", None)):
+        while refs.hasNext():
+            yield refs.next()
+        return
+    try:
+        for ref in refs:
+            yield ref
+    except TypeError:
+        pass
 
 
 def rom_file_offset(rom, addr):
@@ -176,11 +214,8 @@ def main():
 
     # --- References from instructions in .ram into .rom ----------------------
     ins_iter = listing.getInstructions(ram_addrs, True)
-    while ins_iter.hasNext():
-        ins = ins_iter.next()
-        ref_iter = ref_mgr.getReferencesFrom(ins.getAddress())
-        while ref_iter.hasNext():
-            ref = ref_iter.next()
+    for ins in _iter_listing_cursor(ins_iter):
+        for ref in _iter_references_from(ref_mgr, ins.getAddress()):
             to_addr = ref.getToAddress()
             off = rom_file_offset(rom, to_addr)
             if off is not None and off >= MIN_ROM_OFFSET:
@@ -189,8 +224,7 @@ def main():
     # --- LUI + ADDIU/ORI immediate full-address into .rom ---------------------
     pending_lui = {}  # reg_name -> (hi32, insn_addr_str)
     ins_iter = listing.getInstructions(ram_addrs, True)
-    while ins_iter.hasNext():
-        ins = ins_iter.next()
+    for ins in _iter_listing_cursor(ins_iter):
         la = ins.getAddress()
         lui = _lui_upper(ins)
         if lui is not None:
@@ -223,8 +257,7 @@ def main():
     # --- Defined pointers (Data) in .ram to .rom ------------------------------
     data_hits = Counter()
     dit = listing.getDefinedData(ram_addrs, True)
-    while dit.hasNext():
-        d = dit.next()
+    for d in _iter_listing_cursor(dit):
         if not d.isPointer():
             continue
         try:
