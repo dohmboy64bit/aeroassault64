@@ -5,6 +5,7 @@
 # last instruction that defines each GPR (via getResultObjects when available; else regex).
 # For `lw a2,0x8(s2)`-style args, also reports where **base** (`s2`) was last set in that window.
 # Optional: peel **or dst,src,zero** / **lw** chains from a2/a3 toward **v0** / stack (**DEPENDENCY_CHAIN_MAX**).
+# If **v0**/**v1** have no def in-window, prints last **jal** before the use (MIPS return registers).
 #
 # **Limitation:** one predecessor chain only (getPrevious from `jal`); branches/loops can make
 # the reported def wrong — verify in Listing / decompiler. Same `.ram` as Phase2_Closeout.
@@ -28,7 +29,10 @@ SOURCE_FUNCTION_ENTRY_VRAM = 0x8023D92C
 TARGET_CALLEE_ENTRIES = (0x80246FD0,)
 
 # Max instructions to walk backward from each `jal` when building the linear window.
-BACKWARD_MAX = 100
+BACKWARD_MAX = 200
+
+# When peeling hits v0/v1 with no def, report last `jal` before the *use* (MIPS return regs).
+JAL_RETURN_REG_HINT = True
 
 # Registers to report at each snapshot (after delay slot of `jal`).
 ARG_REGS = ("a0", "a1", "a2", "a3")
@@ -201,7 +205,47 @@ def _dependency_seeds_from_arg_def(last_def, reg):
     return seeds
 
 
-def _expand_reg_deps(last_def, reg, indent, max_depth, depth, seen):
+def _insn_index_in_block(block, ins):
+    if ins is None or not block:
+        return -1
+    try:
+        return block.index(ins)
+    except ValueError:
+        pass
+    addr = ins.getAddress()
+    for i, b in enumerate(block):
+        if b.getAddress() == addr:
+            return i
+    return -1
+
+
+def _last_jal_before_in_block(block, before_ins):
+    """Chronological `block`: newest last. Return newest `jal` strictly before `before_ins`, or None."""
+    idx = _insn_index_in_block(block, before_ins)
+    if idx <= 0:
+        return None
+    for j in range(idx - 1, -1, -1):
+        ij = block[j]
+        if ij.getMnemonicString().lower() == "jal":
+            return ij
+    return None
+
+
+def _jal_callee_label(jal_ins, ref_mgr, fm):
+    for ref in _iter_references_from(ref_mgr, jal_ins.getAddress()):
+        if not ref.getReferenceType().isCall():
+            continue
+        to_a = ref.getToAddress()
+        if to_a is None:
+            continue
+        fn = fm.getFunctionAt(to_a)
+        if fn is not None:
+            return "%s @ %s" % (fn.getName(), fn.getEntryPoint())
+        return str(to_a)
+    return "(unresolved call target)"
+
+
+def _expand_reg_deps(last_def, reg, indent, max_depth, depth, seen, block, ref_mgr, fm, consumer_ins):
     """Print copy/lw-base chain for one GPR within forward last_def map."""
     if depth >= max_depth:
         print("%s%s: (max depth)" % (indent, reg))
@@ -212,16 +256,44 @@ def _expand_reg_deps(last_def, reg, indent, max_depth, depth, seen):
     seen.add(reg)
     dins = last_def.get(reg)
     if dins is None:
+        if (
+            JAL_RETURN_REG_HINT
+            and reg in ("v0", "v1")
+            and block
+            and consumer_ins is not None
+            and ref_mgr is not None
+            and fm is not None
+        ):
+            jal_i = _last_jal_before_in_block(block, consumer_ins)
+            if jal_i is not None:
+                lab = _jal_callee_label(jal_i, ref_mgr, fm)
+                print(
+                    "%s%s: (no static def in window — v0/v1 are often jal return values)"
+                    % (indent, reg)
+                )
+                print(
+                    "%s    last jal before this use: @ %s -> %s"
+                    % (indent, jal_i.getAddress(), lab)
+                )
+                print(
+                    "%s    -> Open that callee; follow return in v0, or widen BACKWARD_MAX."
+                    % indent
+                )
+                return
         print("%s%s: (no def in window — widen BACKWARD_MAX or read decompiler)" % (indent, reg))
         return
     print("%s%s <- %s" % (indent, reg, _fmt_def(dins)))
     dst, src = _copy_dest_src(dins)
     if dst == reg and src and src not in ("zero", "r0"):
-        _expand_reg_deps(last_def, src, indent + "  ", max_depth, depth + 1, seen)
+        _expand_reg_deps(
+            last_def, src, indent + "  ", max_depth, depth + 1, seen, block, ref_mgr, fm, dins
+        )
         return
     ld, base = _lw_dest_and_base(dins)
     if ld == reg and base and base not in ("zero", "r0"):
-        _expand_reg_deps(last_def, base, indent + "  ", max_depth, depth + 1, seen)
+        _expand_reg_deps(
+            last_def, base, indent + "  ", max_depth, depth + 1, seen, block, ref_mgr, fm, dins
+        )
 
 
 def _forward_last_defs(block):
@@ -340,7 +412,18 @@ def main():
         if seeds:
             print("  --- same-window copy/lw peel (s2/v0/… toward ROM or struct) ---")
             for r in sorted(seeds):
-                _expand_reg_deps(last_def, r, "  ", DEPENDENCY_CHAIN_MAX, 0, set())
+                _expand_reg_deps(
+                    last_def,
+                    r,
+                    "  ",
+                    DEPENDENCY_CHAIN_MAX,
+                    0,
+                    set(),
+                    block,
+                    ref_mgr,
+                    fm,
+                    None,
+                )
 
         print("")
         n += 1
