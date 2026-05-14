@@ -26,7 +26,7 @@
     {
       "name": "engine-superbuild-vs2022-release-afa-product",
       "displayName": "AeroAssault64 root: ExternalProject with AEROASSAULT64_AFA_PRODUCT (VS 2022 x64, stub patches/RSP)",
-      "description": "Forwards -DAEROASSAULT64_AFA_PRODUCT=ON to inner Zelda64Recomp. Run tools/phase6_materialize_no_mm_engine_files.ps1 before configure.",
+      "description": "Forwards -DAEROASSAULT64_AFA_PRODUCT=ON to inner Zelda64Recomp. Run python3 tools/phase6_materialize_no_mm_engine_files.py (or make phase6-materialize-stubs) before configure.",
       "generator": "Visual Studio 17 2022",
       "architecture": "x64",
       "binaryDir": "${sourceDir}/build-root-vs2022-afa-product",
@@ -37,7 +37,7 @@
     {
       "name": "engine-superbuild-ninja-release-no-mm",
       "displayName": "AeroAssault64 root: ExternalProject with AEROASSAULT64_NO_MM_ROM (stub patches/RSP)",
-      "description": "Forwards -DAEROASSAULT64_NO_MM_ROM=ON to inner Zelda64Recomp. Run tools/phase6_materialize_no_mm_engine_files.ps1 before configure.",
+      "description": "Forwards -DAEROASSAULT64_NO_MM_ROM=ON to inner Zelda64Recomp. Run python3 tools/phase6_materialize_no_mm_engine_files.py (or make phase6-materialize-stubs) before configure.",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build-root-no-mm",
       "cacheVariables": {
@@ -48,7 +48,7 @@
     {
       "name": "engine-superbuild-ninja-release-afa-product",
       "displayName": "AeroAssault64 root: ExternalProject with AEROASSAULT64_AFA_PRODUCT (stub patches/RSP)",
-      "description": "Forwards -DAEROASSAULT64_AFA_PRODUCT=ON to inner Zelda64Recomp (AFA retail path; skips MM patches.elf pipeline). Run tools/phase6_materialize_no_mm_engine_files.ps1 before configure (same RecompiledPatches stubs as no-MM).",
+      "description": "Forwards -DAEROASSAULT64_AFA_PRODUCT=ON to inner Zelda64Recomp (AFA retail path; skips MM patches.elf pipeline). Run python3 tools/phase6_materialize_no_mm_engine_files.py before configure (same RecompiledPatches stubs as no-MM).",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build-root-afa-product",
       "cacheVariables": {

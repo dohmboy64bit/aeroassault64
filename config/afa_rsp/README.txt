@@ -12,7 +12,7 @@ analysis — do not point MM TOMLs at roms/afa.n64.us.z64 without re-deriving te
 
 Build options until real AFA RSP exists:
   -DAEROASSAULT64_NO_MM_ROM=ON or -DAEROASSAULT64_AFA_PRODUCT=ON
-  with tools/phase6_materialize_no_mm_engine_files.ps1 (RecompiledPatches headers) uses rsp stubs from
+  with python3 tools/phase6_materialize_no_mm_engine_files.py (RecompiledPatches headers) uses rsp stubs from
   tools/phase6_no_mm_engine/ when rsp/*.cpp are absent (lib/Zelda64Recomp/CMakeLists.txt).
 
 When you have valid TOMLs for AFA, place them under lib/Zelda64Recomp/ (or here + copy) and run

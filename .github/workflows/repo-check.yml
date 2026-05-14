@@ -44,4 +44,5 @@ jobs:
             tools/verify_phase6_layout.py \
             tools/phase6_mm_engine_prereq_check.py \
             tools/gen_splat_extern_ld.py \
-            tools/compute_aero_rom_xxh3.py
+            tools/compute_aero_rom_xxh3.py \
+            tools/phase6_materialize_no_mm_engine_files.py

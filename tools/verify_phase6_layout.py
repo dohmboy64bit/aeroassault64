@@ -15,7 +15,7 @@ missing under **lib/Zelda64Recomp/** — optional **tools/phase6_copy_n64recomp_
 per **lib/Zelda64Recomp/BUILDING.md** § 4.
 
 If **lib/Zelda64Recomp/RecompiledPatches/patches_bin.h** (and sibling stub headers from
-**tools/phase6_materialize_no_mm_engine_files.ps1**) are missing, prints an informational
+**tools/phase6_materialize_no_mm_engine_files.py**) are missing, prints an informational
 note — engine configure with **-NoMmRom** or **-AfaProduct** needs those files for
 **src/main/register_patches.cpp** includes; still exit 0.
 
@@ -46,7 +46,7 @@ def _stub_headers_note() -> str:
     return (
         "; RecompiledPatches stub headers missing ("
         + ", ".join(missing)
-        + ") — run tools/phase6_materialize_no_mm_engine_files.ps1 or `make phase6-materialize-stubs` "
+        + ") — run python3 tools/phase6_materialize_no_mm_engine_files.py or `make phase6-materialize-stubs` "
         "before engine configure with -NoMmRom/-AfaProduct (lib/Zelda64Recomp/src/main/register_patches.cpp)"
     )
 

@@ -24,8 +24,7 @@ jobs:
         run: .\tools\phase6_ci_ensure_recompiledfuncs_stub.ps1
 
       - name: Materialize no-MM RecompiledPatches headers
-        shell: pwsh
-        run: .\tools\phase6_materialize_no_mm_engine_files.ps1
+        run: python tools/phase6_materialize_no_mm_engine_files.py
 
       - name: Junction repo-root RecompiledFuncs into engine tree
         shell: pwsh

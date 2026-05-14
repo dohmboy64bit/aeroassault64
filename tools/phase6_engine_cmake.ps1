@@ -11,7 +11,7 @@
 # Before configure: run tools/phase6_link_recompiledfuncs.ps1 so engine CMake globs see
 # repo-root RecompiledFuncs/ (N64Recomp TOML output_func_path is ../RecompiledFuncs from config/).
 # Without -NoMmRom: upstream configure still needs Majora's Mask recomp steps (N64Recomp/RSPRecomp, rsp/*.cpp) per lib/Zelda64Recomp/BUILDING.md.
-# With -NoMmRom: run tools/phase6_materialize_no_mm_engine_files.ps1 first, then pass -DAEROASSAULT64_NO_MM_ROM=ON (see lib/README.txt).
+# With -NoMmRom: run python3 tools/phase6_materialize_no_mm_engine_files.py (or make phase6-materialize-stubs) first, then pass -DAEROASSAULT64_NO_MM_ROM=ON (see lib/README.txt).
 # -AfaProduct: pass -DAEROASSAULT64_AFA_PRODUCT=ON (stub PatchesLib/RSP; still materialize RecompiledPatches headers first).
 # -CiStub: run tools/phase6_ci_ensure_recompiledfuncs_stub.ps1 when RecompiledFuncs has no .c (matches CI / fresh clone).
 param(

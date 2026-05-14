@@ -7,8 +7,8 @@
 #
 # Prereqs: Visual Studio 2022 with "Desktop development with C++"; CMake on PATH; from repo root run
 #   .\tools\phase6_link_recompiledfuncs.ps1
-# No-MM:   .\tools\phase6_materialize_no_mm_engine_files.ps1  then  -NoMmRom
-# AFA product: stub PatchesLib/RSP without MM patches pipeline — .\tools\phase6_materialize_no_mm_engine_files.ps1 then -AfaProduct (see lib/Zelda64Recomp/CMakeLists.txt).
+# No-MM:   python3 tools/phase6_materialize_no_mm_engine_files.py  then  -NoMmRom
+# AFA product: stub PatchesLib/RSP without MM patches pipeline — same materialize then -AfaProduct (see lib/Zelda64Recomp/CMakeLists.txt).
 # Optional fork: -AfaRomXxh3Hex <16 hex digits> and/or -ExeOutputName AeroAssault64 (see lib/Zelda64Recomp/CMakeLists.txt).
 # CI parity: -CiStub runs tools/phase6_ci_ensure_recompiledfuncs_stub.ps1 when RecompiledFuncs has no .c (same as .github/workflows/engine-windows.yml).
 param(

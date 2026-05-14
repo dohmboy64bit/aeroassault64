@@ -28,9 +28,11 @@ Upstream **`lib/Zelda64Recomp/CMakeLists.txt`** uses **`CMAKE_SOURCE_DIR`** for 
 
 Upstream **`lib/Zelda64Recomp/CMakeLists.txt`** defines **`option(AEROASSAULT64_NO_MM_ROM …)`** (after **`add_subdirectory(…/N64ModernRuntime)`**). When **ON**, **`PatchesLib`** is built from **`tools/phase6_no_mm_engine/*.c`** instead of **`RecompiledPatches/patches.c`** / **`patches_bin.c`**, and **`PatchesBin`** / **`N64Recomp patches.toml`** custom commands are omitted; **`rsp/aspMain.cpp`** and **`rsp/njpgdspMain.cpp`** are replaced by stub **`.cpp`** files in the same **`tools/phase6_no_mm_engine/`** directory.
 
-**`src/main/register_patches.cpp`** still includes **`../../RecompiledPatches/patches_bin.h`** and **`recomp_overlays.inl`** — run from repo root:
+**`src/main/register_patches.cpp`** still includes **`../../RecompiledPatches/patches_bin.h`** and **`recomp_overlays.inl`** — from repo root:
 
-  .\tools\phase6_materialize_no_mm_engine_files.ps1
+  python3 tools/phase6_materialize_no_mm_engine_files.py
+
+or **`make phase6-materialize-stubs`** (same script). On Windows you can still run **`.\tools\phase6_materialize_no_mm_engine_files.ps1`** (uses **`python`** / **`python3`** when available, else copies inline).
 
 Then configure with **`-DAEROASSAULT64_NO_MM_ROM=ON`**, for example:
 
@@ -40,7 +42,7 @@ Or repo-root **`cmake --preset engine-superbuild-ninja-release-no-mm`** (forward
 
 ### AFA retail product (`AEROASSAULT64_AFA_PRODUCT`)
 
-Same **`phase6_materialize_no_mm_engine_files.ps1`** and stub **`PatchesLib`** / RSP behavior as **`NO_MM_ROM`** (see **`lib/Zelda64Recomp/CMakeLists.txt`** **`option(AEROASSAULT64_AFA_PRODUCT …)`** and **`_AERO_PATCH_RSP_STUBS`**). Use when you want the MM **`patches.elf`** / **`N64Recomp patches.toml`** pipeline off **without** setting **`AEROASSAULT64_NO_MM_ROM`**. Example:
+Same **`tools/phase6_materialize_no_mm_engine_files.py`** (or **`.ps1`**) and stub **`PatchesLib`** / RSP behavior as **`NO_MM_ROM`** (see **`lib/Zelda64Recomp/CMakeLists.txt`** **`option(AEROASSAULT64_AFA_PRODUCT …)`** and **`_AERO_PATCH_RSP_STUBS`**). Use when you want the MM **`patches.elf`** / **`N64Recomp patches.toml`** pipeline off **without** setting **`AEROASSAULT64_NO_MM_ROM`**. Example:
 
   .\tools\phase6_engine_cmake.ps1 -Mode Configure -AfaProduct
 

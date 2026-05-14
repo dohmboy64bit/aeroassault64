@@ -55,9 +55,9 @@ From repo root in **PowerShell** (requires **CMake** on `PATH`; default generato
   .\tools\phase6_engine_cmake.ps1 -Mode Build
   .\tools\phase6_engine_cmake.ps1 -Mode All
 
-**No MM ROM (CMake stubs):** run **`.\tools\phase6_materialize_no_mm_engine_files.ps1`** (or **`make phase6-materialize-stubs`** when **`pwsh`** is available to **`make`**) then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -NoMmRom`** (or **`-Mode All -NoMmRom`**); add **`-CiStub`** when **`RecompiledFuncs/`** has no **`.c`** yet (same stub as CI). Same as passing **`-DAEROASSAULT64_NO_MM_ROM=ON`** to inner **`cmake`** — see **`lib/Zelda64Recomp/CMakeLists.txt`** and **`lib/README.txt`**. **`make verify-phase6-layout`** notes missing **`RecompiledPatches/`** stub headers (informational).
+**No MM ROM (CMake stubs):** run **`python3 tools/phase6_materialize_no_mm_engine_files.py`** or **`make phase6-materialize-stubs`**, or **`.\tools\phase6_materialize_no_mm_engine_files.ps1`** on Windows, then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -NoMmRom`** (or **`-Mode All -NoMmRom`**); add **`-CiStub`** when **`RecompiledFuncs/`** has no **`.c`** yet (same stub as CI). Same as passing **`-DAEROASSAULT64_NO_MM_ROM=ON`** to inner **`cmake`** — see **`lib/Zelda64Recomp/CMakeLists.txt`** and **`lib/README.txt`**. **`make verify-phase6-layout`** notes missing **`RecompiledPatches/`** stub headers (informational).
 
-**AFA product (CMake stubs, MM `NO_MM_ROM` off):** same **`phase6_materialize_no_mm_engine_files.ps1`**, then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -AfaProduct`** (or **`-Mode All -AfaProduct`**). Same as **`-DAEROASSAULT64_AFA_PRODUCT=ON`** — skips MM **`patches.elf`** / **`patches.toml`** like **`NO_MM_ROM`**; see **`lib/Zelda64Recomp/CMakeLists.txt`** **`option(AEROASSAULT64_AFA_PRODUCT …)`** and **`config/afa_rsp/README.txt`**.
+**AFA product (CMake stubs, MM `NO_MM_ROM` off):** same **`phase6_materialize_no_mm_engine_files.py`** / **`make phase6-materialize-stubs`**, then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -AfaProduct`** (or **`-Mode All -AfaProduct`**). Same as **`-DAEROASSAULT64_AFA_PRODUCT=ON`** — skips MM **`patches.elf`** / **`patches.toml`** like **`NO_MM_ROM`**; see **`lib/Zelda64Recomp/CMakeLists.txt`** **`option(AEROASSAULT64_AFA_PRODUCT …)`** and **`config/afa_rsp/README.txt`**.
 
 Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`** with **`cmake --build`** for that generator). Output directory: **`build-engine/`** (gitignored).
 
@@ -82,12 +82,12 @@ Convenience (runs junction + copy + **`python tools/verify_phase6_layout.py`**).
   cmake --preset engine-superbuild-ninja-release
   cmake --build --preset engine-superbuild-ninja-release
 
-No-MM preset (forwards **`AEROASSAULT64_NO_MM_ROM`** to the engine; materialize **`RecompiledPatches/`** stubs first — **`tools/phase6_materialize_no_mm_engine_files.ps1`**):
+No-MM preset (forwards **`AEROASSAULT64_NO_MM_ROM`** to the engine; materialize **`RecompiledPatches/`** stubs first — **`python3 tools/phase6_materialize_no_mm_engine_files.py`** or **`make phase6-materialize-stubs`**):
 
   cmake --preset engine-superbuild-ninja-release-no-mm
   cmake --build --preset engine-superbuild-ninja-release-no-mm
 
-AFA-product presets (forward **`AEROASSAULT64_AFA_PRODUCT`**; same materialize step as no-MM):
+AFA-product presets (forward **`AEROASSAULT64_AFA_PRODUCT`**; same materialize step as no-MM — **`phase6_materialize_no_mm_engine_files.py`**):
 
   cmake --preset engine-superbuild-ninja-release-afa-product
   cmake --build --preset engine-superbuild-ninja-release-afa-product
