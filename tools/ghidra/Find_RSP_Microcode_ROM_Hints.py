@@ -13,6 +13,7 @@
 # your game's `OSTask` setup (N64brew memory map / libultra docs).
 #
 # Run: Ghidra 12+ with support/pyghidraRun.bat — Script Manager — this file under tools/ghidra.
+# Older Ghidra: MemoryBlock has no getBody(); this script uses AddressRangeImpl + AddressSet instead.
 #
 #@runtime PyGhidra
 #@category AeroAssault64
@@ -41,6 +42,19 @@ def get_block_exact(mem, name):
         if b.getName() == name:
             return b
     return None
+
+
+def memory_block_as_address_set(block):
+    """
+    AddressSet covering one MemoryBlock. Older Ghidra builds do not have MemoryBlock.getBody()
+    (added in newer releases); AddressRangeImpl + AddressSet works across versions.
+    """
+    from ghidra.program.model.address import AddressRangeImpl
+    from ghidra.program.model.address import AddressSet
+
+    aset = AddressSet()
+    aset.add(AddressRangeImpl(block.getStart(), block.getEnd()))
+    return aset
 
 
 def rom_file_offset(rom, addr):
@@ -158,9 +172,10 @@ def main():
     rom_start = rom.getStart()
     hits = Counter()
     lui_pair_hits = Counter()
+    ram_addrs = memory_block_as_address_set(ram)
 
     # --- References from instructions in .ram into .rom ----------------------
-    ins_iter = listing.getInstructions(ram.getBody(), True)
+    ins_iter = listing.getInstructions(ram_addrs, True)
     while ins_iter.hasNext():
         ins = ins_iter.next()
         ref_iter = ref_mgr.getReferencesFrom(ins.getAddress())
@@ -173,7 +188,7 @@ def main():
 
     # --- LUI + ADDIU/ORI immediate full-address into .rom ---------------------
     pending_lui = {}  # reg_name -> (hi32, insn_addr_str)
-    ins_iter = listing.getInstructions(ram.getBody(), True)
+    ins_iter = listing.getInstructions(ram_addrs, True)
     while ins_iter.hasNext():
         ins = ins_iter.next()
         la = ins.getAddress()
@@ -207,7 +222,7 @@ def main():
 
     # --- Defined pointers (Data) in .ram to .rom ------------------------------
     data_hits = Counter()
-    dit = listing.getDefinedData(ram.getBody(), True)
+    dit = listing.getDefinedData(ram_addrs, True)
     while dit.hasNext():
         d = dit.next()
         if not d.isPointer():
