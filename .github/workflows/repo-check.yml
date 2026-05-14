@@ -17,10 +17,14 @@ jobs:
       - name: RODATA tuple vs splat.yaml
         run: python3 tools/verify_rodata_splits_sync.py
 
+      - name: N64Recomp game TOML
+        run: python3 tools/verify_n64recomp_toml.py
+
       - name: py_compile tools/*.py
         run: |
           python3 -m py_compile \
             tools/dedupe_post_data_bss.py \
             tools/n64recomp_stub_until_green.py \
             tools/verify_rodata_splits_sync.py \
+            tools/verify_n64recomp_toml.py \
             tools/gen_splat_extern_ld.py

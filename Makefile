@@ -73,7 +73,8 @@ n64recomp: $(ELF)
 
 # ROM-free sanity (CI / quick local): Ghidra rodata tuple vs splat + Python syntax for tools/*.py
 check: verify-rodata-sync
-	python3 -m py_compile tools/dedupe_post_data_bss.py tools/n64recomp_stub_until_green.py tools/verify_rodata_splits_sync.py tools/gen_splat_extern_ld.py
+	python3 tools/verify_n64recomp_toml.py
+	python3 -m py_compile tools/dedupe_post_data_bss.py tools/n64recomp_stub_until_green.py tools/verify_rodata_splits_sync.py tools/verify_n64recomp_toml.py tools/gen_splat_extern_ld.py
 	@echo "OK: make check"
 
 # Ghidra Phase3: RODATA_ROM_SPLITS must match splat main rodata subsegments (stdlib check).
