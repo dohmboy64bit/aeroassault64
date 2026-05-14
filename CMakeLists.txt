@@ -7,7 +7,8 @@
 # Prereqs: git submodule update --init --recursive; tools/phase6_setup_windows.ps1 (or junction +
 # copy PEs); full MM build still needs lib/Zelda64Recomp/BUILDING.md (ROM, RSP, patches pipeline).
 # Optional: -DAEROASSAULT64_NO_MM_ROM=ON skips MM patches/RSP file generation — see lib/README.txt "No Majora's Mask ROM".
-# Optional: -DAEROASSAULT64_AFA_PRODUCT=ON — AFA retail stub PatchesLib/RSP without MM patches pipeline (see lib/Zelda64Recomp/CMakeLists.txt).
+# Optional: -DAEROASSAULT64_AFA_PRODUCT=ON — AFA retail path; stub PatchesLib/RSP unless -DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON (see lib/Zelda64Recomp/AFA_PORT.md).
+# Optional: -DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON (with AFA_PRODUCT) forwards real patches.elf + patches.toml PatchesLib (see lib/Zelda64Recomp/CMakeLists.txt).
 cmake_minimum_required(VERSION 3.20)
 project(AeroAssault64_engine_superbuild LANGUAGES C)
 
@@ -32,6 +33,8 @@ option(AEROASSAULT64_NO_MM_ROM "Forward to engine: stub PatchesLib/RSP, skip MM 
 
 option(AEROASSAULT64_AFA_PRODUCT "Forward to engine: AFA retail stub PatchesLib/RSP (no MM patches.elf); see lib/Zelda64Recomp/CMakeLists.txt" OFF)
 
+option(AEROASSAULT64_AFA_RETAIL_PIPELINES "Forward to engine: with AFA_PRODUCT, use real patches.elf + patches.toml (see lib/Zelda64Recomp/AFA_PORT.md)" OFF)
+
 set(AEROASSAULT64_AFA_ROM_XXH3_HEX "" CACHE STRING "Forwarded to engine: 16 hex digit XXH3 for AFA USA GameEntry (optional).")
 set(AEROASSAULT64_EXE_OUTPUT_NAME "" CACHE STRING "Forwarded to engine: OUTPUT_NAME for game exe (optional).")
 set(AEROASSAULT64_VERSION_TAG "" CACHE STRING "Forwarded to engine: version tag (optional).")
@@ -46,6 +49,9 @@ if(AEROASSAULT64_NO_MM_ROM)
 endif()
 if(AEROASSAULT64_AFA_PRODUCT)
   list(APPEND _EP_CMAKE_ARGS "-DAEROASSAULT64_AFA_PRODUCT=ON")
+endif()
+if(AEROASSAULT64_AFA_RETAIL_PIPELINES)
+  list(APPEND _EP_CMAKE_ARGS "-DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON")
 endif()
 if(NOT "${AEROASSAULT64_AFA_ROM_XXH3_HEX}" STREQUAL "")
   list(APPEND _EP_CMAKE_ARGS "-DAEROASSAULT64_AFA_ROM_XXH3_HEX=${AEROASSAULT64_AFA_ROM_XXH3_HEX}")

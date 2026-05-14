@@ -9,6 +9,7 @@
 #   .\tools\phase6_link_recompiledfuncs.ps1
 # No-MM:   python3 tools/phase6_materialize_no_mm_engine_files.py  then  -NoMmRom
 # AFA product: stub PatchesLib/RSP without MM patches pipeline — same materialize then -AfaProduct (see lib/Zelda64Recomp/CMakeLists.txt).
+# With -AfaProduct -AfaRetailPipelines: real patches.elf + patches.toml PatchesLib (see lib/Zelda64Recomp/AFA_PORT.md).
 # Optional fork: -AfaRomXxh3Hex <16 hex digits> and/or -ExeOutputName AeroAssault64 (see lib/Zelda64Recomp/CMakeLists.txt).
 # CI parity: -CiStub runs tools/phase6_ci_ensure_recompiledfuncs_stub.ps1 when RecompiledFuncs has no .c (same as .github/workflows/engine-windows.yml).
 param(
@@ -20,6 +21,7 @@ param(
     [switch]$NoMmRom,
     [switch]$CiStub,
     [switch]$AfaProduct,
+    [switch]$AfaRetailPipelines,
     [string]$AfaRomXxh3Hex = '',
     [string]$ExeOutputName = '',
     [string]$VersionTag = '',
@@ -44,6 +46,12 @@ if ($NoMmRom) {
 }
 if ($AfaProduct) {
     $NoMmArgs += '-DAEROASSAULT64_AFA_PRODUCT=ON'
+}
+if ($AfaRetailPipelines) {
+    if (-not $AfaProduct) {
+        Write-Warning '-AfaRetailPipelines is intended with -AfaProduct; forwarding -DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON anyway (engine may warn).'
+    }
+    $NoMmArgs += '-DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON'
 }
 if ($AfaRomXxh3Hex) {
     $NoMmArgs += "-DAEROASSAULT64_AFA_ROM_XXH3_HEX=$AfaRomXxh3Hex"

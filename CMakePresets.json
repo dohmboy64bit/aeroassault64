@@ -55,6 +55,30 @@
         "CMAKE_BUILD_TYPE": "Release",
         "AEROASSAULT64_AFA_PRODUCT": "ON"
       }
+    },
+    {
+      "name": "engine-superbuild-ninja-release-afa-product-retail",
+      "displayName": "AeroAssault64 root: AFA_PRODUCT + AFA_RETAIL_PIPELINES (real patches.toml PatchesLib)",
+      "description": "Forwards AEROASSAULT64_AFA_PRODUCT and AEROASSAULT64_AFA_RETAIL_PIPELINES. Requires engine patches.elf, patches.toml, N64Recomp RecompiledPatches output — see lib/Zelda64Recomp/AFA_PORT.md §2.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-root-afa-product-retail",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "AEROASSAULT64_AFA_PRODUCT": "ON",
+        "AEROASSAULT64_AFA_RETAIL_PIPELINES": "ON"
+      }
+    },
+    {
+      "name": "engine-superbuild-vs2022-release-afa-product-retail",
+      "displayName": "AeroAssault64 root: VS 2022, AFA_PRODUCT + AFA_RETAIL_PIPELINES",
+      "description": "Same as engine-superbuild-ninja-release-afa-product-retail but Visual Studio 17 2022 x64.",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build-root-vs2022-afa-product-retail",
+      "cacheVariables": {
+        "AEROASSAULT64_AFA_PRODUCT": "ON",
+        "AEROASSAULT64_AFA_RETAIL_PIPELINES": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -83,6 +107,17 @@
     {
       "name": "engine-superbuild-ninja-release-afa-product",
       "configurePreset": "engine-superbuild-ninja-release-afa-product",
+      "targets": ["zelda64recomp_engine"]
+    },
+    {
+      "name": "engine-superbuild-ninja-release-afa-product-retail",
+      "configurePreset": "engine-superbuild-ninja-release-afa-product-retail",
+      "targets": ["zelda64recomp_engine"]
+    },
+    {
+      "name": "engine-superbuild-vs2022-release-afa-product-retail",
+      "configurePreset": "engine-superbuild-vs2022-release-afa-product-retail",
+      "configuration": "Release",
       "targets": ["zelda64recomp_engine"]
     }
   ]

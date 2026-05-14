@@ -13,6 +13,7 @@
 # Without -NoMmRom: upstream configure still needs Majora's Mask recomp steps (N64Recomp/RSPRecomp, rsp/*.cpp) per lib/Zelda64Recomp/BUILDING.md.
 # With -NoMmRom: run python3 tools/phase6_materialize_no_mm_engine_files.py (or make phase6-materialize-stubs) first, then pass -DAEROASSAULT64_NO_MM_ROM=ON (see lib/README.txt).
 # -AfaProduct: pass -DAEROASSAULT64_AFA_PRODUCT=ON (stub PatchesLib/RSP; still materialize RecompiledPatches headers first).
+# -AfaRetailPipelines: with -AfaProduct, also pass -DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON (real patches.toml path; see lib/Zelda64Recomp/AFA_PORT.md).
 # -CiStub: run tools/phase6_ci_ensure_recompiledfuncs_stub.ps1 when RecompiledFuncs has no .c (matches CI / fresh clone).
 param(
     [ValidateSet('Configure', 'Build', 'All')]
@@ -21,7 +22,8 @@ param(
     [string]$BuildType = 'Release',
     [switch]$NoMmRom,
     [switch]$CiStub,
-    [switch]$AfaProduct
+    [switch]$AfaProduct,
+    [switch]$AfaRetailPipelines
 )
 $ErrorActionPreference = 'Stop'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -39,6 +41,12 @@ if ($NoMmRom) {
 }
 if ($AfaProduct) {
     $NoMmArgs += '-DAEROASSAULT64_AFA_PRODUCT=ON'
+}
+if ($AfaRetailPipelines) {
+    if (-not $AfaProduct) {
+        Write-Warning '-AfaRetailPipelines is intended with -AfaProduct; forwarding -DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON anyway (engine may warn).'
+    }
+    $NoMmArgs += '-DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON'
 }
 
 switch ($Mode) {

@@ -57,11 +57,11 @@ From repo root in **PowerShell** (requires **CMake** on `PATH`; default generato
 
 **No MM ROM (CMake stubs):** run **`python3 tools/phase6_materialize_no_mm_engine_files.py`** or **`make phase6-materialize-stubs`**, or **`.\tools\phase6_materialize_no_mm_engine_files.ps1`** on Windows, then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -NoMmRom`** (or **`-Mode All -NoMmRom`**); add **`-CiStub`** when **`RecompiledFuncs/`** has no **`.c`** yet (same stub as CI). Same as passing **`-DAEROASSAULT64_NO_MM_ROM=ON`** to inner **`cmake`** — see **`lib/Zelda64Recomp/CMakeLists.txt`** and **`lib/README.txt`**. **`make verify-phase6-layout`** notes missing **`RecompiledPatches/`** stub headers (informational).
 
-**AFA product (CMake stubs, MM `NO_MM_ROM` off):** same **`phase6_materialize_no_mm_engine_files.py`** / **`make phase6-materialize-stubs`**, then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -AfaProduct`** (or **`-Mode All -AfaProduct`**). Same as **`-DAEROASSAULT64_AFA_PRODUCT=ON`** — skips MM **`patches.elf`** / **`patches.toml`** like **`NO_MM_ROM`**; see **`lib/Zelda64Recomp/CMakeLists.txt`** **`option(AEROASSAULT64_AFA_PRODUCT …)`** and **`config/afa_rsp/README.txt`**.
+**AFA product (CMake stubs, MM `NO_MM_ROM` off):** same **`phase6_materialize_no_mm_engine_files.py`** / **`make phase6-materialize-stubs`**, then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -AfaProduct`** (or **`-Mode All -AfaProduct`**). Same as **`-DAEROASSAULT64_AFA_PRODUCT=ON`** — skips MM **`patches.elf`** / **`patches.toml`** like **`NO_MM_ROM`**; see **`lib/Zelda64Recomp/CMakeLists.txt`** **`option(AEROASSAULT64_AFA_PRODUCT …)`** and **`config/afa_rsp/README.txt`**. **Retail patches with AFA hooks:** **`-AfaProduct -AfaRetailPipelines`** (forwards **`AEROASSAULT64_AFA_RETAIL_PIPELINES`**) once engine **`patches.elf`**, **`patches.toml`**, and **`RecompiledPatches/`** exist — **`lib/Zelda64Recomp/AFA_PORT.md`** §2.
 
 Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`** with **`cmake --build`** for that generator). Output directory: **`build-engine/`** (gitignored).
 
-**Visual Studio 2022 (MSVC) — recommended for full `Zelda64Recompiled.exe` link:** **`tools/phase6_engine_cmake_vs2022.ps1`** uses **`build-engine-vs2022/`** (do not mix with Ninja’s **`build-engine/`**). Same **`Mode`** / **`-NoMmRom`** / **`-AfaProduct`** pattern; optional **`-CiStub`** matches **`tools/phase6_ci_ensure_recompiledfuncs_stub.ps1`** when **`RecompiledFuncs/`** has no generated **`.c`** (see **`.github/workflows/engine-windows.yml`**). Build uses **`--config Release`** by default (override with **`-Configuration`**). Example:
+**Visual Studio 2022 (MSVC) — recommended for full `Zelda64Recompiled.exe` link:** **`tools/phase6_engine_cmake_vs2022.ps1`** uses **`build-engine-vs2022/`** (do not mix with Ninja’s **`build-engine/`**). Same **`Mode`** / **`-NoMmRom`** / **`-AfaProduct`** / **`-AfaRetailPipelines`** pattern; optional **`-CiStub`** matches **`tools/phase6_ci_ensure_recompiledfuncs_stub.ps1`** when **`RecompiledFuncs/`** has no generated **`.c`** (see **`.github/workflows/engine-windows.yml`**). Build uses **`--config Release`** by default (override with **`-Configuration`**). Example:
 
   .\tools\phase6_engine_cmake_vs2022.ps1 -Mode All -NoMmRom
   .\tools\phase6_engine_cmake_vs2022.ps1 -Mode All -AfaProduct
@@ -95,7 +95,15 @@ AFA-product presets (forward **`AEROASSAULT64_AFA_PRODUCT`**; same materialize s
   cmake --preset engine-superbuild-vs2022-release-afa-product
   cmake --build --preset engine-superbuild-vs2022-release-afa-product
 
-Visual Studio: open the **AeroAssault64** repo folder, pick preset **`engine-superbuild-vs2022-release`** or **`engine-superbuild-vs2022-release-afa-product`**, then build target **`zelda64recomp_engine`**. Outer dirs **`build-root/`**, **`build-root-vs2022/`**, **`build-root-afa-product/`**, **`build-root-vs2022-afa-product/`**; inner **`build-engine/`** (see **`.gitignore`**).
+AFA-product **+ retail `PatchesLib`** (forward **`AEROASSAULT64_AFA_RETAIL_PIPELINES`** as well; requires real **`patches.elf`** / **`patches.toml`** / **`RecompiledPatches/`** — **`lib/Zelda64Recomp/AFA_PORT.md`** §2):
+
+  cmake --preset engine-superbuild-ninja-release-afa-product-retail
+  cmake --build --preset engine-superbuild-ninja-release-afa-product-retail
+
+  cmake --preset engine-superbuild-vs2022-release-afa-product-retail
+  cmake --build --preset engine-superbuild-vs2022-release-afa-product-retail
+
+Visual Studio: open the **AeroAssault64** repo folder, pick preset **`engine-superbuild-vs2022-release`** or **`engine-superbuild-vs2022-release-afa-product`**, then build target **`zelda64recomp_engine`**. Outer dirs **`build-root/`**, **`build-root-vs2022/`**, **`build-root-afa-product/`**, **`build-root-vs2022-afa-product/`**, **`build-root-afa-product-retail/`**, **`build-root-vs2022-afa-product-retail/`**; inner **`build-engine/`** (see **`.gitignore`**).
 
 **RecompiledFuncs path:** upstream CMake globs only under **`lib/Zelda64Recomp/RecompiledFuncs/`**; this repo’s TOML emits to **repo-root** **`RecompiledFuncs/`**. Run once after clone:
 

@@ -15,8 +15,10 @@ build/
 build-root/
 build-root-no-mm/
 build-root-afa-product/
+build-root-afa-product-retail/
 build-root-vs2022/
 build-root-vs2022-afa-product/
+build-root-vs2022-afa-product-retail/
 build-engine/
 build-engine-vs2022/
 out/
