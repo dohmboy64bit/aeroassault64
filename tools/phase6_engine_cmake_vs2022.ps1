@@ -8,6 +8,7 @@
 # Prereqs: Visual Studio 2022 with "Desktop development with C++"; CMake on PATH; from repo root run
 #   .\tools\phase6_link_recompiledfuncs.ps1
 # No-MM:   .\tools\phase6_materialize_no_mm_engine_files.ps1  then  -NoMmRom
+# AFA product: stub PatchesLib/RSP without MM patches pipeline — .\tools\phase6_materialize_no_mm_engine_files.ps1 then -AfaProduct (see lib/Zelda64Recomp/CMakeLists.txt).
 # Optional fork: -AfaRomXxh3Hex <16 hex digits> and/or -ExeOutputName AeroAssault64 (see lib/Zelda64Recomp/CMakeLists.txt).
 # CI parity: -CiStub runs tools/phase6_ci_ensure_recompiledfuncs_stub.ps1 when RecompiledFuncs has no .c (same as .github/workflows/engine-windows.yml).
 param(
@@ -18,6 +19,7 @@ param(
     [string]$Target = 'Zelda64Recompiled',
     [switch]$NoMmRom,
     [switch]$CiStub,
+    [switch]$AfaProduct,
     [string]$AfaRomXxh3Hex = '',
     [string]$ExeOutputName = '',
     [string]$VersionTag = '',
@@ -39,6 +41,9 @@ if ($CiStub) {
 $NoMmArgs = @()
 if ($NoMmRom) {
     $NoMmArgs += '-DAEROASSAULT64_NO_MM_ROM=ON'
+}
+if ($AfaProduct) {
+    $NoMmArgs += '-DAEROASSAULT64_AFA_PRODUCT=ON'
 }
 if ($AfaRomXxh3Hex) {
     $NoMmArgs += "-DAEROASSAULT64_AFA_ROM_XXH3_HEX=$AfaRomXxh3Hex"

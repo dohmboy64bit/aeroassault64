@@ -2,7 +2,7 @@
 # Prerequisite: from repo root run `python3 -m splat split config/splat.yaml` so asm/, assets/ipl3.bin, and build/*.ld exist.
 # See Docs/Workflow.md and https://github.com/ethteck/splat/wiki/General-Workflow
 
-.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync verify-entrypoint-sync verify-phase6-layout phase6-mm-prereq phase6-n64recomp-mm phase6-rsprecomp check help
+.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync verify-entrypoint-sync verify-phase6-layout phase6-mm-prereq phase6-n64recomp-mm phase6-rsprecomp phase5-aero-n64recomp-win check help
 
 .DEFAULT_GOAL := all
 
@@ -19,6 +19,7 @@ help:
 	@echo "  make verify-phase6-layout - python3 tools/verify_phase6_layout.py (RecompiledFuncs bridge vs engine)"
 	@echo "  make phase6-mm-prereq  - python3 tools/phase6_mm_engine_prereq_check.py (MM engine / BUILDING.md checklist)"
 	@echo "  make phase6-n64recomp-mm - Windows: pwsh tools/phase6_n64recomp_mm.ps1 (MM us.rev1.toml; needs ROM in engine root)"
+	@echo "  make phase5-aero-n64recomp-win - Windows: pwsh tools/phase5_run_aero_n64recomp.ps1 (AFA TOML; needs $(ELF), tools/N64Recomp.exe)"
 	@echo "  make phase6-rsprecomp - Windows: pwsh tools/phase6_rsprecomp_engine.ps1 (MM RSP outputs; needs ROM in engine root)"
 	@echo "  make clean          - remove $(ELF), objects, extern ld"
 	@echo "See Docs/Workflow.md and tools/README.txt."
@@ -118,6 +119,10 @@ phase6-mm-prereq:
 # Windows / PowerShell 7+: MM CPU recomp (us.rev1.toml) — BUILDING.md section 3–4.
 phase6-n64recomp-mm:
 	pwsh -NoProfile -ExecutionPolicy Bypass -File tools/phase6_n64recomp_mm.ps1
+
+# Windows / PowerShell 7+: AFA CPU recomp — config/aerofighters_assault.n64recomp.toml (see tools/README.txt Phase 5).
+phase5-aero-n64recomp-win:
+	pwsh -NoProfile -ExecutionPolicy Bypass -File tools/phase5_run_aero_n64recomp.ps1
 
 # Windows / PowerShell 7+: MM RSP outputs — run after phase6-n64recomp-mm when following BUILDING.md (section 3 ROM).
 phase6-rsprecomp:

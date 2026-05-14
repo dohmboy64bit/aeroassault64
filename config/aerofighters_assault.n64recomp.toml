@@ -95,3 +95,7 @@ value = 0x03E00008 # jr $ra
 func = "func_8024AE70"
 vram = 0x8024AE74
 value = 0x00000000 # nop (was delay slot: addi $at, $zero, 0xFC0)
+
+# Stability (Phase 5): keep build/aerofighters_assault.elf in sync with splat (make strict-verify) before
+# running tools/phase5_run_aero_n64recomp.ps1 or tools/N64Recomp.exe on this file — N64Recomp src/config.cpp
+# resolves elf_path relative to this TOML's directory (config/).

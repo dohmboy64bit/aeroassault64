@@ -57,9 +57,11 @@ From repo root in **PowerShell** (requires **CMake** on `PATH`; default generato
 
 **No MM ROM (CMake stubs):** run **`.\tools\phase6_materialize_no_mm_engine_files.ps1`** then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -NoMmRom`** (or **`-Mode All -NoMmRom`**); add **`-CiStub`** when **`RecompiledFuncs/`** has no **`.c`** yet (same stub as CI). Same as passing **`-DAEROASSAULT64_NO_MM_ROM=ON`** to inner **`cmake`** — see **`lib/Zelda64Recomp/CMakeLists.txt`** and **`lib/README.txt`**.
 
+**AFA product (CMake stubs, MM `NO_MM_ROM` off):** same **`phase6_materialize_no_mm_engine_files.ps1`**, then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -AfaProduct`** (or **`-Mode All -AfaProduct`**). Same as **`-DAEROASSAULT64_AFA_PRODUCT=ON`** — skips MM **`patches.elf`** / **`patches.toml`** like **`NO_MM_ROM`**; see **`lib/Zelda64Recomp/CMakeLists.txt`** **`option(AEROASSAULT64_AFA_PRODUCT …)`** and **`config/afa_rsp/README.txt`**.
+
 Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`** with **`cmake --build`** for that generator). Output directory: **`build-engine/`** (gitignored).
 
-**Visual Studio 2022 (MSVC) — recommended for full `Zelda64Recompiled.exe` link:** **`tools/phase6_engine_cmake_vs2022.ps1`** uses **`build-engine-vs2022/`** (do not mix with Ninja’s **`build-engine/`**). Same **`Mode`** / **`-NoMmRom`** pattern; optional **`-CiStub`** matches **`tools/phase6_ci_ensure_recompiledfuncs_stub.ps1`** when **`RecompiledFuncs/`** has no generated **`.c`** (see **`.github/workflows/engine-windows.yml`**). Build uses **`--config Release`** by default (override with **`-Configuration`**). Example:
+**Visual Studio 2022 (MSVC) — recommended for full `Zelda64Recompiled.exe` link:** **`tools/phase6_engine_cmake_vs2022.ps1`** uses **`build-engine-vs2022/`** (do not mix with Ninja’s **`build-engine/`**). Same **`Mode`** / **`-NoMmRom`** / **`-AfaProduct`** pattern; optional **`-CiStub`** matches **`tools/phase6_ci_ensure_recompiledfuncs_stub.ps1`** when **`RecompiledFuncs/`** has no generated **`.c`** (see **`.github/workflows/engine-windows.yml`**). Build uses **`--config Release`** by default (override with **`-Configuration`**). Example:
 
   .\tools\phase6_engine_cmake_vs2022.ps1 -Mode All -NoMmRom
 
@@ -83,6 +85,11 @@ No-MM preset (forwards **`AEROASSAULT64_NO_MM_ROM`** to the engine; materialize 
 
   cmake --preset engine-superbuild-ninja-release-no-mm
   cmake --build --preset engine-superbuild-ninja-release-no-mm
+
+AFA-product preset (forwards **`AEROASSAULT64_AFA_PRODUCT`**; same materialize step as no-MM):
+
+  cmake --preset engine-superbuild-ninja-release-afa-product
+  cmake --build --preset engine-superbuild-ninja-release-afa-product
 
 Visual Studio: open the **AeroAssault64** repo folder, pick preset **`engine-superbuild-vs2022-release`**, then build target **`zelda64recomp_engine`**. Outer dirs **`build-root/`**, **`build-root-vs2022/`**; inner **`build-engine/`** (see **`.gitignore`**).
 
@@ -115,6 +122,8 @@ Prerequisite: WSL (or Linux) **`make strict-verify`** (or at least **`make`**) s
 From repo root in **PowerShell** (first argument is the TOML path; there is no `--help` mode):
 
   .\tools\N64Recomp.exe .\config\aerofighters_assault.n64recomp.toml
+
+Makefile (Windows): **`make phase5-aero-n64recomp-win`** runs **`tools/phase5_run_aero_n64recomp.ps1`** (same checks as that script; needs **`build/aerofighters_assault.elf`**).
 
 Optional context dump (supported in **`src/main.cpp`** for this tree): append **`--dump-context`** to emit **`dump.toml`** / **`data_dump.toml`** under the current working directory.
 
