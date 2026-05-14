@@ -1,4 +1,4 @@
-# ROM-free checks: splat.yaml rodata list vs Ghidra Phase3 script + Python syntax.
+# ROM-free checks: splat/Makefile, rodata Ghidra tuple, entry VRAM triple, N64Recomp TOML, py_compile.
 # Does not run splat split, make, or N64Recomp (no ROM / ELF / Windows PE on ubuntu-latest).
 name: repo-check
 
@@ -20,6 +20,9 @@ jobs:
       - name: RODATA tuple vs splat.yaml
         run: python3 tools/verify_rodata_splits_sync.py
 
+      - name: Entry VRAM (splat entry / symbol_addrs / N64Recomp TOML)
+        run: python3 tools/verify_entrypoint_sync.py
+
       - name: N64Recomp game TOML
         run: python3 tools/verify_n64recomp_toml.py
 
@@ -30,5 +33,6 @@ jobs:
             tools/n64recomp_stub_until_green.py \
             tools/verify_rodata_splits_sync.py \
             tools/verify_splat_makefile_sync.py \
+            tools/verify_entrypoint_sync.py \
             tools/verify_n64recomp_toml.py \
             tools/gen_splat_extern_ld.py

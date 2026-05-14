@@ -4,7 +4,15 @@ Phase 4 (MIPS ELF, WSL): from repo root run `make` then `make verify` (see root 
 
 **BSS vs `post_data` duplicates:** after `splat split`, build `build/asm/post_data.o` once (`make build/asm/post_data.o`), run `make dedupe-bss` (`tools/dedupe_post_data_bss.py --apply`), then `make LINK_STRICT=1 verify` to link **without** `--allow-multiple-definition`. Shorthand: **`make strict-verify`**. See script docstring and `Makefile` comments.
 
-**Ghidra / splat rodata sync:** `python3 tools/verify_rodata_splits_sync.py` or **`make verify-rodata-sync`** — **`tools/ghidra/Phase3_Closeout_Report.py`** **`RODATA_ROM_SPLITS`** must match **`config/splat.yaml`** **`main`** **`rodata`** ROM starts (see `tools/ghidra/README.txt`). **`python3 tools/verify_splat_makefile_sync.py`** (**`make verify-splat-makefile-sync`**) — **`options.basename`** / **`elf_path`** in **`config/splat.yaml`** must match **`Makefile`** **`ELF`** / **`LDSCRIPT`** stems. **N64Recomp TOML:** **`python3 tools/verify_n64recomp_toml.py`** — parse **`config/aerofighters_assault.n64recomp.toml`**, **`[input]`** keys, mutual exclusion of **`elf_path`** / **`symbols_file_path`** (N64Recomp **`src/main.cpp`**), **`entrypoint`** vs **`config/symbol_addrs.txt`**. **`make check`** runs rodata sync + TOML check + **`py_compile`** **`tools/*.py`** (no ROM; CI — `.github/workflows/repo-check.yml`). Requires **Python 3.11+** (**`tomllib`**).
+**Entry VRAM triple:** **`python3 tools/verify_entrypoint_sync.py`** (**`make verify-entrypoint-sync`**) — **`config/splat.yaml`** **`entry`** segment **`vram`**, **`config/symbol_addrs.txt`** **`entrypoint`**, and **`config/aerofighters_assault.n64recomp.toml`** **`[input].entrypoint`** must match (see **`Makefile`** **`-e entrypoint`**).
+
+**Ghidra / splat rodata sync:** `python3 tools/verify_rodata_splits_sync.py` or **`make verify-rodata-sync`** — **`tools/ghidra/Phase3_Closeout_Report.py`** **`RODATA_ROM_SPLITS`** must match **`config/splat.yaml`** **`main`** **`rodata`** ROM starts (see `tools/ghidra/README.txt`).
+
+**Splat vs Makefile names:** **`python3 tools/verify_splat_makefile_sync.py`** (**`make verify-splat-makefile-sync`**) — **`options.basename`** / **`elf_path`** in **`config/splat.yaml`** must match **`Makefile`** **`ELF`** / **`LDSCRIPT`** stems.
+
+**N64Recomp TOML:** **`python3 tools/verify_n64recomp_toml.py`** — parse **`config/aerofighters_assault.n64recomp.toml`**, **`[input]`** keys, mutual exclusion of **`elf_path`** / **`symbols_file_path`** (N64Recomp **`src/main.cpp`**), **`entrypoint`** vs **`config/symbol_addrs.txt`**.
+
+**`make check`** runs **`verify-splat-makefile-sync`**, **`verify-rodata-sync`**, **`verify-entrypoint-sync`**, **`python3 tools/verify_n64recomp_toml.py`**, and **`py_compile`** **`tools/*.py`** (no ROM; CI — `.github/workflows/repo-check.yml`). Requires **Python 3.11+** (**`tomllib`**).
 
 N64Recomp and RSPRecomp (Windows PE, built from upstream)
 
