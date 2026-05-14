@@ -1,0 +1,21 @@
+# N64Recomp patches config — copied from upstream MM root patches.toml:
+#   https://raw.githubusercontent.com/Mr-Wiseguy/Zelda64Recomp/master/patches.toml
+#
+# For AFA: replace elf_path, func_reference_syms_file, and data_reference_syms_files with paths that
+# match your AFA patches.elf build and splat/Zelda64RecompSyms outputs for Aero Fighters Assault.
+
+[input]
+elf_path = "patches/patches.elf"
+output_func_path = "RecompiledPatches"
+single_file_output = true
+use_absolute_symbols = true
+func_reference_syms_file = "Zelda64RecompSyms/mm.us.rev1.syms.toml"
+data_reference_syms_files = [
+  "Zelda64RecompSyms/mm.us.rev1.datasyms.toml",
+  "Zelda64RecompSyms/mm.us.rev1.datasyms_static.toml",
+  "patches/custom_syms.toml",
+]
+output_binary_path = "patches/patches.bin"
+unpaired_lo16_warnings = false
+allow_exports = true
+strict_patch_mode = true

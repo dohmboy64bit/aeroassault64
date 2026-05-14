@@ -17,3 +17,9 @@ Build options until real AFA RSP exists:
 
 When you have valid TOMLs for AFA, place them under lib/Zelda64Recomp/ (or here + copy) and run
 tools/RSPRecomp.exe from the engine root per BUILDING.md.
+
+Templates (copy into engine root and fill offsets before running RSPRecomp):
+  ../../config/afa_rsp/aspMain.afa.us.template.toml
+  ../../config/afa_rsp/njpgdspMain.afa.us.template.toml
+
+Full port checklist: lib/Zelda64Recomp/AFA_PORT.md

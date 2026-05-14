@@ -1,0 +1,17 @@
+# RSPRecomp template for Aero Fighters Assault (USA) — aspMain ucode.
+# DO NOT run until text_offset / text_size / text_address are filled from ROM analysis (Ghidra + splat).
+# Schema matches upstream MM file (same keys as RSPRecomp expects):
+#   https://raw.githubusercontent.com/Mr-Wiseguy/Zelda64Recomp/master/aspMain.us.rev1.toml
+#
+# Typical workflow: copy this file to lib/Zelda64Recomp/aspMain.afa.us.toml, set rom_file_path to your
+# byteswapped USA z64 next to the engine root, run from engine root:
+#   ./RSPRecomp.exe aspMain.afa.us.toml
+# Output: lib/Zelda64Recomp/rsp/aspMain.cpp (see lib/Zelda64Recomp/BUILDING.md section 4).
+
+text_offset = 0x0
+text_size = 0x0
+text_address = 0x04001000
+rom_file_path = "afa.n64.us.z64"
+output_file_path = "rsp/aspMain.cpp"
+output_function_name = "aspMain"
+extra_indirect_branch_targets = []
