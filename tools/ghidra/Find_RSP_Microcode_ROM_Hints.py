@@ -227,6 +227,31 @@ def _print_row_hints(mem, rom, off, data_ram_refs):
         print("       # " + " | ".join(bits))
 
 
+def _cluster_contiguous_ram_pointer_rows(records, step=4, min_len=3):
+    """
+    Find runs of Data addresses spaced by `step` (e.g. four dwords at 803fa684..803fa690).
+    Yields list of (ram_address, rom_file_offset) per cluster.
+    """
+    if len(records) < min_len:
+        return
+    uniq = {}
+    for ram_addr, rom_off in records:
+        uniq[int(ram_addr.getOffset())] = (ram_addr, rom_off)
+    rows = sorted(uniq.values(), key=lambda t: int(t[0].getOffset()))
+    run = [rows[0]]
+    for i in range(1, len(rows)):
+        po = int(rows[i - 1][0].getOffset())
+        co = int(rows[i][0].getOffset())
+        if co - po == step:
+            run.append(rows[i])
+        else:
+            if len(run) >= min_len:
+                yield run
+            run = [rows[i]]
+    if len(run) >= min_len:
+        yield run
+
+
 def main():
     prog = currentProgram  # noqa: F821
     mem = prog.getMemory()
@@ -292,6 +317,7 @@ def main():
     # --- Defined pointers (Data) in .ram to .rom ------------------------------
     data_hits = Counter()
     data_ram_refs = defaultdict(list)
+    data_pointer_records = []  # (ram_addr, rom_off) for clustering contiguous tables
     dit = listing.getDefinedData(ram_addrs, True)
     for d in _iter_listing_cursor(dit):
         if not d.isPointer():
@@ -315,6 +341,7 @@ def main():
             data_hits[off] += 1
             if len(data_ram_refs[off]) < MAX_DATA_RAM_REFS_PER_OFFSET:
                 data_ram_refs[off].append(str(d.getAddress()))
+            data_pointer_records.append((d.getAddress(), off))
 
     merged = Counter()
     for c in (hits, lui_pair_hits, data_hits):
@@ -399,6 +426,26 @@ def main():
             sub += 1
             if sub >= SINGLE_HIT_APPEND_MAX:
                 break
+
+    clusters = list(_cluster_contiguous_ram_pointer_rows(data_pointer_records))
+    if clusters:
+        print("")
+        print("--- Contiguous .ram `Data` typed as pointer (spacing 0x4) ---")
+        print(
+            "  Often one dword table/struct; Ghidra auto-type may be wrong — try `dword` "
+            "or a named struct instead of four separate `pointer`."
+        )
+        for run in clusters:
+            roms = ", ".join("0x%X" % r[1] for r in run)
+            print(
+                "  %d words @ %s .. %s  ->  ROM file offsets: %s"
+                % (
+                    len(run),
+                    run[0][0],
+                    run[-1][0],
+                    roms,
+                )
+            )
 
     print("")
     print("--- RSPRecomp TOML reminder (verify before use) ---")
