@@ -20,7 +20,7 @@
 - **Common configure failures (upstream tree):**
   - **`Cannot find source file: .../rsp/aspMain.cpp`** — **`rsp/.gitignore`** lists generated **`aspMain.cpp`** / **`njpgdspMain.cpp`**. Generate them with **RSPRecomp** per **`lib/Zelda64Recomp/BUILDING.md`** § 4 (**`./RSPRecomp aspMain.us.rev1.toml`** etc., from the **engine** root with MM artifacts).
   - **Missing `RecompiledPatches/patches.c`** — produced by the engine’s **`patches/`** + **`N64Recomp patches.toml`** pipeline (**`lib/Zelda64Recomp/CMakeLists.txt`** custom commands); not the same as AeroAssault64 **`patches/`** at repo root.
-- Open the generated solution or launch **`build-engine/`** output under **Visual Studio** for **Debug** / **RelWithDebInfo** once the executable exists.
+- Open the generated solution or launch **`build-engine/Zelda64Recompiled.exe`** (upstream **`add_executable(Zelda64Recompiled)`** + **`CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}`** in **`lib/Zelda64Recomp/CMakeLists.txt`**) under **Visual Studio** for **Debug** / **RelWithDebInfo** once the target links. **Visual Studio** launch working directory is set to **`lib/Zelda64Recomp/`** (**`VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"`** in the same file) so relative **`assets/`** paths match **`lib/Zelda64Recomp/BUILDING.md`** § 6.
 - **AFA-specific** breakpoints and RT64 / recomp logging notes belong here as the port boots on a **forked** engine, not stock MM.
 
 ## Reference material

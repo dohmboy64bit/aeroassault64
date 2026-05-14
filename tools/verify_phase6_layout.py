@@ -10,6 +10,10 @@ repo-root RecompiledFuncs/ (see tools/README.txt, lib/README.txt).
 If both paths exist, they must be the same directory (junction on Windows, symlink on Unix).
 If lib/Zelda64Recomp is absent (e.g. CI without submodules), exit 0.
 
+When the engine checkout exists, also notes (stdout, still exit 0) if **N64Recomp.exe** is
+missing under **lib/Zelda64Recomp/** — optional **tools/phase6_copy_n64recomp_to_engine.ps1**
+per **lib/Zelda64Recomp/BUILDING.md** § 4.
+
 Run from repo root: python3 tools/verify_phase6_layout.py
 """
 from __future__ import annotations
@@ -20,8 +24,25 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE_CMAKE = ROOT / "lib" / "Zelda64Recomp" / "CMakeLists.txt"
+ENGINE_ROOT = ROOT / "lib" / "Zelda64Recomp"
 ROOT_RF = ROOT / "RecompiledFuncs"
-ENG_RF = ROOT / "lib" / "Zelda64Recomp" / "RecompiledFuncs"
+ENG_RF = ENGINE_ROOT / "RecompiledFuncs"
+ENG_N64 = ENGINE_ROOT / "N64Recomp.exe"
+ENG_RSP = ENGINE_ROOT / "RSPRecomp.exe"
+
+
+def _engine_pe_note() -> str:
+    if not ENGINE_CMAKE.is_file():
+        return ""
+    n64 = ENG_N64.is_file()
+    rsp = ENG_RSP.is_file()
+    if n64 and rsp:
+        return ""
+    if not n64 and not rsp:
+        return "; N64Recomp.exe and RSPRecomp.exe missing in engine root (optional: tools/phase6_copy_n64recomp_to_engine.ps1)"
+    if not n64:
+        return "; N64Recomp.exe missing in engine root (optional: tools/phase6_copy_n64recomp_to_engine.ps1)"
+    return "; RSPRecomp.exe missing in engine root (optional: tools/phase6_copy_n64recomp_to_engine.ps1)"
 
 
 def main() -> int:
@@ -31,7 +52,8 @@ def main() -> int:
 
     if not ENG_RF.exists():
         print(
-            "OK: phase6 layout (engine checkout present; RecompiledFuncs bridge not created — optional)",
+            "OK: phase6 layout (engine checkout present; RecompiledFuncs bridge not created — optional)"
+            + _engine_pe_note(),
         )
         return 0
 
@@ -41,7 +63,9 @@ def main() -> int:
 
     try:
         if os.path.samefile(ROOT_RF, ENG_RF):
-            print("OK: phase6 layout (RecompiledFuncs bridge points at repo root)")
+            print(
+                "OK: phase6 layout (RecompiledFuncs bridge points at repo root)" + _engine_pe_note(),
+            )
             return 0
     except OSError as e:
         print(f"error: could not compare paths: {e}", file=sys.stderr)

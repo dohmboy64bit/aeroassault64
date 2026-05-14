@@ -251,6 +251,7 @@ Phase **4** is **closed at smoke level** when: **`make strict-verify`** is docum
 | Init engine | From repo root: **`git submodule update --init --recursive`** — pulls **`lib/Zelda64Recomp`** and nested deps (see **`.gitmodules`**, **`lib/README.txt`**). |
 | Bridge **RecompiledFuncs** | **`tools/phase6_link_recompiledfuncs.ps1`** — junction **`lib/Zelda64Recomp/RecompiledFuncs`** → repo-root **`RecompiledFuncs/`** so upstream **`CMakeLists.txt`** **`file(GLOB …/RecompiledFuncs/*.c)`** matches Phase 5 output paths (**`config/aerofighters_assault.n64recomp.toml`** **`output_func_path`**; N64Recomp **`src/config.cpp`**). **`-Remove`** to delete the junction. On Unix/WSL: **`ln -sfn ../../RecompiledFuncs lib/Zelda64Recomp/RecompiledFuncs`** (see **`lib/README.txt`**). |
 | Vendored **N64Recomp** in engine | **`tools/phase6_copy_n64recomp_to_engine.ps1`** — copies **`tools/N64Recomp.exe`** and **`tools/RSPRecomp.exe`** into **`lib/Zelda64Recomp/`** per **`lib/Zelda64Recomp/BUILDING.md`** § 4 (same step as upstream “copy … to the root of the Zelda64Recomp repository”). **`-WhatIf`** previews paths. Binaries are **gitignored** inside the submodule (**`lib/Zelda64Recomp/.gitignore`** **`*.exe`**). |
+| **Windows prep (all of the above)** | **`tools/phase6_setup_windows.ps1`** — runs **`phase6_link_recompiledfuncs.ps1`**, **`phase6_copy_n64recomp_to_engine.ps1`**, then **`python`/`python3 tools/verify_phase6_layout.py`**. |
 | Verify bridge | **`make verify-phase6-layout`** — **`python3 tools/verify_phase6_layout.py`** (fails if both **`RecompiledFuncs`** paths exist but are not the same directory; skips if submodule missing). Part of **`make check`**. |
 | Configure / build | Root **`tools/phase6_engine_cmake.ps1`** — runs **`cmake -S lib/Zelda64Recomp -B build-engine …`** (upstream **`CMakeLists.txt`** expects that tree as **`CMAKE_SOURCE_DIR`**; see **`lib/README.txt`**). Or run the same **`cmake`** lines manually. Follow **`lib/Zelda64Recomp/BUILDING.md`** for MM ROM / toolchain prerequisites until an AFA fork exists. |
 | Game layer | Empty tree for now — read **`src/README.txt`** and **`patches/README.txt`** |
@@ -259,7 +260,7 @@ Phase **4** is **closed at smoke level** when: **`make strict-verify`** is docum
 ### Phase 6 checklist
 
 - [x] **`lib/Zelda64Recomp`** present as submodule (**`dev`**); **`git submodule update --init --recursive`** documented in **`lib/README.txt`**. **Pin:** **`ab677e76615e5e47b3b26c822ca426485752ac77`** (**2026-05-13**).
-- [x] **Copy vendored recompilers into engine** — **`tools/phase6_copy_n64recomp_to_engine.ps1`** aligns **`tools/N64Recomp.exe`** / **`RSPRecomp.exe`** with **`lib/Zelda64Recomp/BUILDING.md`** § 4 (ignored under submodule **`*.exe`**).
+- [x] **Windows one-shot prep** — **`tools/phase6_setup_windows.ps1`** chains junction + PE copy + **`verify_phase6_layout.py`** (documented in **`Docs/Workflow.md`** Phase 6 table).
 - [ ] In-tree or fork **CMake** that builds **Aero Fighters Assault** + links this repo’s **`RecompiledFuncs/`** output (regenerated locally; not committed except **`README.txt`** / **`.gitkeep`**).
 - [ ] First **PowerShell** / **VS** run of the **AFA** game binary (even if it exits early) — capture breakpoints and logging notes in **`Docs/Debugging.md`**.
 
