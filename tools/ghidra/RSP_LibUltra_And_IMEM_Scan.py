@@ -4,6 +4,8 @@
 # Complements tools/ghidra/Find_RSP_Microcode_ROM_Hints.py: that script scores .ram→.rom xrefs;
 # this one searches for common *names* and *immediate values* (0x04001000 / 0x04001080) and short
 # ASCII substrings so you can jump to likely `osSpTask*` / `OSTask` / DMA setup in the Listing.
+# Paradigm-era titles (AFA, Pilotwings) may ship *without* embedded `osSpTask` strings; AFA USA
+# Ghidra runs still show `uvGfx` / `uvSc` / `uvDMA` scheduler rodata — see PARADIGM_ASCII_PATTERNS.
 #
 # Same project layout as Phase2_Closeout_Report.py: MemoryBlock `.rom` (cart) and `.ram` (MIPS).
 # Run: support/pyghidraRun.bat — Script Manager — this file.
@@ -23,6 +25,7 @@ from __future__ import print_function
 MAX_SYMBOL_HITS = 60
 MAX_INSN_IMM_HITS = 80
 MAX_STRING_HITS_PER_PATTERN = 15
+MAX_PARADIGM_STRING_HITS = 12
 # IMEM bases often seen in N64 ucode TOMLs (RSPRecomp `text_address` examples).
 IMEM_IMMEDIATES = (
     0x04001000,
@@ -64,6 +67,15 @@ ASCII_PATTERNS = (
     b"osPiDma",
     b"osPi",
     b"OSTask",
+)
+
+# Substrings observed in AFA USA rodata / error strings (Ghidra labels like s_uvGfxBegin…, s__uvDMA:…).
+# Pilotwings 64 is a Paradigm-era cross-check title (Docs/SystemPrompt.md); patterns may or may not match.
+PARADIGM_ASCII_PATTERNS = (
+    b"uvGfxBegin",
+    b"uvScDoneGfx",
+    b"uvDMA:",
+    b"RSP_timeout",
 )
 
 
@@ -240,6 +252,20 @@ def main():
             continue
         print("  %r: %d hit(s)" % (pat.decode("ascii", errors="replace"), len(found)))
         for a in found[:MAX_STRING_HITS_PER_PATTERN]:
+            print("    @ %s" % a)
+    print("")
+
+    print("--- .ram raw-byte search (Paradigm / AFA-style scheduler rodata) ---")
+    print("  (see Docs/RepoInjests/Pilotwings/README.txt for Pilotwings 64 RSPRecomp *example* TOML)")
+    for pat in PARADIGM_ASCII_PATTERNS:
+        found = _find_all_bytes(
+            mem, ram.getStart(), ram.getEnd(), pat, MAX_PARADIGM_STRING_HITS
+        )
+        if not found:
+            print("  %r: (no hits)" % pat.decode("ascii", errors="replace"))
+            continue
+        print("  %r: %d hit(s)" % (pat.decode("ascii", errors="replace"), len(found)))
+        for a in found[:MAX_PARADIGM_STRING_HITS]:
             print("    @ %s" % a)
     print("")
 

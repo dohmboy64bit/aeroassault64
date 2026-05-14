@@ -27,7 +27,7 @@ CMake (lib/Zelda64Recomp/CMakeLists.txt): when _AERO_PATCH_RSP_STUBS is ON, if B
 rsp/njpgdspMain.cpp exist, they are linked; otherwise rsp_*_stub.cpp from tools/phase6_no_mm_engine/ is used.
 When _AERO_PATCH_RSP_STUBS is OFF, the stub swap is skipped — both rsp/*.cpp must exist or the link will fail.
 
-Heuristic Ghidra (PyGhidra): **`../../tools/ghidra/Find_RSP_Microcode_ROM_Hints.py`** — same **`support/pyghidraRun.bat`** / Script Manager setup as **`tools/ghidra/Phase2_Closeout_Report.py`**; prints **`.ram` → `.rom`** xref counts and **`lui`/`addiu`** ROM pointer targets (hints only — verify xrefs / **`OSTask`** before TOML). **`../../tools/ghidra/RSP_LibUltra_And_IMEM_Scan.py`** — symbol / IMEM immediate / ASCII **`osSpTask`**-style scans in **`.ram`**.
+Heuristic Ghidra (PyGhidra): **`../../tools/ghidra/Find_RSP_Microcode_ROM_Hints.py`** — same **`support/pyghidraRun.bat`** / Script Manager setup as **`tools/ghidra/Phase2_Closeout_Report.py`**; prints **`.ram` → `.rom`** xref counts and **`lui`/`addiu`** ROM pointer targets (hints only — verify xrefs / **`OSTask`** before TOML). **`../../tools/ghidra/RSP_LibUltra_And_IMEM_Scan.py`** — symbol / IMEM immediate / ASCII **`osSpTask`**-style scans in **`.ram`**, plus Paradigm **`uv*`** rodata hints when SDK strings are absent. Cross-title notes: **`../../Docs/RepoInjests/Pilotwings/README.txt`**.
 
 Templates (copy into engine root and fill offsets before running RSPRecomp):
   ../../config/afa_rsp/aspMain.afa.us.template.toml
