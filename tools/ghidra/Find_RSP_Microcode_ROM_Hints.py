@@ -33,6 +33,9 @@ MIN_ROM_OFFSET = 0x1000
 MIN_HITS = 2
 # How many rows to print from the merged histogram.
 TOP_N = 40
+# If the main table (min_hits=MIN_HITS) prints fewer than this many rows, also dump hits==1.
+SINGLE_HIT_APPEND_IF_PRIMARY_LT = 8
+SINGLE_HIT_APPEND_MAX = 30
 # Typical IMEM bases for Zelda64Recomp-style TOMLs (informational only).
 TEXT_ADDR_ASP = 0x04001000
 TEXT_ADDR_NJPG = 0x04001080
@@ -296,6 +299,12 @@ def main():
         "Counts: insn_operand_refs=%d offsets, lui+imm_pairs=%d, data_pointers=%d"
         % (len(hits), len(lui_pair_hits), len(data_hits))
     )
+    if len(lui_pair_hits) == 0:
+        print(
+            "Note: lui+imm_pairs=0 — pair scanner expects lui + addiu/addi/ori with Scalar imms in "
+            "operands 1–2; your listing may differ. RSP blobs are still often found via xref-to-ROM "
+            "or OSTask / DMA tables (search RAM for pointers into .rom)."
+        )
     print("")
     print(
         "Top ROM offsets (merged, min_hits=%d, min_off=0x%X). "
@@ -303,6 +312,7 @@ def main():
     )
     print("  offset     hits  insn_ref  lui_pair  data_ptr  first_bytes")
     printed = 0
+    printed_offs = set()
     for off, cnt in merged.most_common():
         if cnt < MIN_HITS:
             continue
@@ -318,12 +328,40 @@ def main():
                 b,
             )
         )
+        printed_offs.add(off)
         printed += 1
         if printed >= TOP_N:
             break
 
     if printed == 0:
         print("  (no offsets met MIN_HITS — try lowering MIN_HITS in the script header)")
+
+    if printed < SINGLE_HIT_APPEND_IF_PRIMARY_LT and merged:
+        print("")
+        print(
+            "--- Exploratory: single-hit ROM refs (hits==1, max %d rows) ---"
+            % SINGLE_HIT_APPEND_MAX
+        )
+        print("  (often noise — still worth xrefs for DMA/ucode; deduped from table above)")
+        sub = 0
+        for off, cnt in merged.most_common():
+            if cnt != 1 or off in printed_offs:
+                continue
+            b = _dump_rom_prefix(mem, rom, off, 16)
+            print(
+                "  0x%06X  %4d  %4d  %4d  %4d  %s"
+                % (
+                    off,
+                    cnt,
+                    hits.get(off, 0),
+                    lui_pair_hits.get(off, 0),
+                    data_hits.get(off, 0),
+                    b,
+                )
+            )
+            sub += 1
+            if sub >= SINGLE_HIT_APPEND_MAX:
+                break
 
     print("")
     print("--- RSPRecomp TOML reminder (verify before use) ---")
