@@ -28,6 +28,11 @@ BASE_VRAM = 0x802839B0
 # Effective addresses **BASE_VRAM + byte** to flag (must match **`lw`/`sw` displacement**).
 MEM_OFFSETS = (0, 0x8, 0xC)
 
+# **`"all"`** — any **`lw`/`sw`/…** in **`_MEM_RE`** matching EA. **`"stores"`** — only **`sw`/`sh`/`sb`**
+# (who writes **`BASE+off`** — set this to hunt **`text_offset`/`text_size`** fills). **`"loads"`** —
+# only **`lw`/`lhu`/`lbu`/`lb`** (who reads those slots).
+MEMOP_RUN = "all"
+
 # Stop after this many hits (raise if truncated).
 MAX_HITS = 400
 
@@ -229,7 +234,18 @@ def _apply_constant_semantics(ins, known, ref_mgr, fm):
         known.pop(r, None)
 
 
-def _check_memop(ins, known, want_addrs, hits, fn, max_hits):
+def _memop_filter_tuple():
+    r = str(MEMOP_RUN).lower().strip()
+    if r == "stores":
+        return frozenset(("sw", "sh", "sb"))
+    if r == "loads":
+        return frozenset(("lw", "lhu", "lbu", "lb"))
+    if r != "all":
+        print("WARNING: MEMOP_RUN should be all|stores|loads — using all.")
+    return None
+
+
+def _check_memop(ins, known, want_addrs, hits, fn, max_hits, mnem_filter):
     if len(hits) >= max_hits:
         return
     s = _norm_dis(ins)
@@ -237,6 +253,9 @@ def _check_memop(ins, known, want_addrs, hits, fn, max_hits):
     if not m:
         return
     _mn, _rt, im_tok, base_r = m.groups()
+    mn = _mn.lower()
+    if mnem_filter is not None and mn not in mnem_filter:
+        return
     base_r = base_r.lower()
     if base_r not in known:
         return
@@ -247,8 +266,10 @@ def _check_memop(ins, known, want_addrs, hits, fn, max_hits):
     ea = (known[base_r] + imm) & 0xFFFFFFFF
     if ea not in want_addrs:
         return
+    kind = "STORE" if mn in ("sw", "sh", "sb") else "LOAD"
     hits.append(
         (
+            kind,
             int(ins.getAddress().getOffset()),
             fn.getName() if fn else "?",
             fn.getEntryPoint() if fn else None,
@@ -265,6 +286,8 @@ def main():
         _g["RESET_KNOWN_PER_FUNCTION"] = True
     if "JAL_KNOWN_V0_BY_CALLEE_ENTRY" not in _g:
         _g["JAL_KNOWN_V0_BY_CALLEE_ENTRY"] = {0x8023D820: 0x802839B0}
+    if "MEMOP_RUN" not in _g:
+        _g["MEMOP_RUN"] = "all"
 
     mem = prog.getMemory()
     listing = prog.getListing()
@@ -282,9 +305,14 @@ def main():
     print("=== RSP_RAM_Constant_Base_Memops (AeroAssault64) ===")
     print("Program: %s" % prog.getName())
     print("Want effective addresses: %s" % ", ".join("0x%08X" % a for a in sorted(want)))
+    print(
+        "MEMOP_RUN=%s (use \"stores\" for sw/sh/sb writers to BASE+off; \"loads\" for lw/… readers)."
+        % repr(MEMOP_RUN)
+    )
     print("(lui/addiu/ori/or-copy/li; jal clears volatiles; optional JAL_KNOWN_V0_BY_CALLEE_ENTRY.)")
     print("")
 
+    mnem_filter = _memop_filter_tuple()
     ram_set = memory_block_as_address_set(ram)
     hits = []
     cur_fn = None
@@ -300,15 +328,15 @@ def main():
             cur_fn = fn
             known = {}
 
-        _check_memop(ins, known, want, hits, fn, MAX_HITS)
+        _check_memop(ins, known, want, hits, fn, MAX_HITS, mnem_filter)
         if len(hits) >= MAX_HITS:
             break
         _apply_constant_semantics(ins, known, ref_mgr, fm)
 
-    hits.sort(key=lambda t: t[0])
+    hits.sort(key=lambda t: t[1])
     print("Hits: %d%s" % (len(hits), (" (MAX_HITS — raise tunable)" if len(hits) >= MAX_HITS else "")))
-    for addr, name, ent, ea, dis in hits:
-        print("  @ 0x%X  %s @ %s  EA=0x%08X" % (addr, name, ent, ea))
+    for kind, addr, name, ent, ea, dis in hits:
+        print("  [%s] @ 0x%X  %s @ %s  EA=0x%08X" % (kind, addr, name, ent, ea))
         print("      %s" % dis)
 
     if not hits:
