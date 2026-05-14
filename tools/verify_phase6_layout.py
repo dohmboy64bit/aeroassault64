@@ -14,6 +14,11 @@ When the engine checkout exists, also notes (stdout, still exit 0) if **N64Recom
 missing under **lib/Zelda64Recomp/** — optional **tools/phase6_copy_n64recomp_to_engine.ps1**
 per **lib/Zelda64Recomp/BUILDING.md** § 4.
 
+If **lib/Zelda64Recomp/RecompiledPatches/patches_bin.h** (and sibling stub headers from
+**tools/phase6_materialize_no_mm_engine_files.ps1**) are missing, prints an informational
+note — engine configure with **-NoMmRom** or **-AfaProduct** needs those files for
+**src/main/register_patches.cpp** includes; still exit 0.
+
 Run from repo root: python3 tools/verify_phase6_layout.py
 """
 from __future__ import annotations
@@ -27,8 +32,23 @@ ENGINE_CMAKE = ROOT / "lib" / "Zelda64Recomp" / "CMakeLists.txt"
 ENGINE_ROOT = ROOT / "lib" / "Zelda64Recomp"
 ROOT_RF = ROOT / "RecompiledFuncs"
 ENG_RF = ENGINE_ROOT / "RecompiledFuncs"
+ENG_RP = ENGINE_ROOT / "RecompiledPatches"
 ENG_N64 = ENGINE_ROOT / "N64Recomp.exe"
 ENG_RSP = ENGINE_ROOT / "RSPRecomp.exe"
+STUB_HEADERS = ("patches_bin.h", "recomp_overlays.inl", "funcs.h")
+
+
+def _stub_headers_note() -> str:
+    """register_patches.cpp includes RecompiledPatches/*.h — materialize before stub CMake."""
+    missing = [n for n in STUB_HEADERS if not (ENG_RP / n).is_file()]
+    if not missing:
+        return ""
+    return (
+        "; RecompiledPatches stub headers missing ("
+        + ", ".join(missing)
+        + ") — run tools/phase6_materialize_no_mm_engine_files.ps1 or `make phase6-materialize-stubs` "
+        "before engine configure with -NoMmRom/-AfaProduct (lib/Zelda64Recomp/src/main/register_patches.cpp)"
+    )
 
 
 def _engine_pe_note() -> str:
@@ -53,7 +73,8 @@ def main() -> int:
     if not ENG_RF.exists():
         print(
             "OK: phase6 layout (engine checkout present; RecompiledFuncs bridge not created — optional)"
-            + _engine_pe_note(),
+            + _engine_pe_note()
+            + _stub_headers_note(),
         )
         return 0
 
@@ -64,7 +85,9 @@ def main() -> int:
     try:
         if os.path.samefile(ROOT_RF, ENG_RF):
             print(
-                "OK: phase6 layout (RecompiledFuncs bridge points at repo root)" + _engine_pe_note(),
+                "OK: phase6 layout (RecompiledFuncs bridge points at repo root)"
+                + _engine_pe_note()
+                + _stub_headers_note(),
             )
             return 0
     except OSError as e:

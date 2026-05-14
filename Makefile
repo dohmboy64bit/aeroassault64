@@ -2,7 +2,7 @@
 # Prerequisite: from repo root run `python3 -m splat split config/splat.yaml` so asm/, assets/ipl3.bin, and build/*.ld exist.
 # See Docs/Workflow.md and https://github.com/ethteck/splat/wiki/General-Workflow
 
-.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync verify-entrypoint-sync verify-phase6-layout phase6-mm-prereq phase6-n64recomp-mm phase6-rsprecomp phase5-aero-n64recomp-win check help
+.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync verify-entrypoint-sync verify-phase6-layout phase6-mm-prereq phase6-n64recomp-mm phase6-rsprecomp phase6-materialize-stubs phase5-aero-n64recomp-win check help
 
 .DEFAULT_GOAL := all
 
@@ -17,6 +17,7 @@ help:
 	@echo "  make n64recomp      - run tools/N64Recomp.exe with N64RECOMP_CFG (needs $(ELF), often from WSL)"
 	@echo "  make check          - ROM-free: splat/Makefile + rodata + entrypoint + N64Recomp TOML + phase6 layout + py_compile tools"
 	@echo "  make verify-phase6-layout - python3 tools/verify_phase6_layout.py (RecompiledFuncs bridge vs engine)"
+	@echo "  make phase6-materialize-stubs - Windows: pwsh tools/phase6_materialize_no_mm_engine_files.ps1 (RecompiledPatches headers for -NoMmRom/-AfaProduct)"
 	@echo "  make phase6-mm-prereq  - python3 tools/phase6_mm_engine_prereq_check.py (MM engine / BUILDING.md checklist)"
 	@echo "  make phase6-n64recomp-mm - Windows: pwsh tools/phase6_n64recomp_mm.ps1 (MM us.rev1.toml; needs ROM in engine root)"
 	@echo "  make phase5-aero-n64recomp-win - Windows: pwsh tools/phase5_run_aero_n64recomp.ps1 (AFA TOML; needs $(ELF), tools/N64Recomp.exe)"
@@ -111,6 +112,10 @@ verify-splat-makefile-sync:
 # Phase 6: when lib/Zelda64Recomp exists, RecompiledFuncs bridge must not split roots.
 verify-phase6-layout:
 	python3 tools/verify_phase6_layout.py
+
+# Stub RecompiledPatches/*.h for engine configure with -DAEROASSAULT64_NO_MM_ROM or AFA_PRODUCT (Windows / pwsh).
+phase6-materialize-stubs:
+	pwsh -NoProfile -ExecutionPolicy Bypass -File tools/phase6_materialize_no_mm_engine_files.ps1
 
 # Phase 6: optional audit for stock Zelda64Recomp (MM) prerequisites (BUILDING.md). Not part of make check.
 phase6-mm-prereq:

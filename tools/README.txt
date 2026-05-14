@@ -55,7 +55,7 @@ From repo root in **PowerShell** (requires **CMake** on `PATH`; default generato
   .\tools\phase6_engine_cmake.ps1 -Mode Build
   .\tools\phase6_engine_cmake.ps1 -Mode All
 
-**No MM ROM (CMake stubs):** run **`.\tools\phase6_materialize_no_mm_engine_files.ps1`** then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -NoMmRom`** (or **`-Mode All -NoMmRom`**); add **`-CiStub`** when **`RecompiledFuncs/`** has no **`.c`** yet (same stub as CI). Same as passing **`-DAEROASSAULT64_NO_MM_ROM=ON`** to inner **`cmake`** — see **`lib/Zelda64Recomp/CMakeLists.txt`** and **`lib/README.txt`**.
+**No MM ROM (CMake stubs):** run **`.\tools\phase6_materialize_no_mm_engine_files.ps1`** (or **`make phase6-materialize-stubs`** when **`pwsh`** is available to **`make`**) then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -NoMmRom`** (or **`-Mode All -NoMmRom`**); add **`-CiStub`** when **`RecompiledFuncs/`** has no **`.c`** yet (same stub as CI). Same as passing **`-DAEROASSAULT64_NO_MM_ROM=ON`** to inner **`cmake`** — see **`lib/Zelda64Recomp/CMakeLists.txt`** and **`lib/README.txt`**. **`make verify-phase6-layout`** notes missing **`RecompiledPatches/`** stub headers (informational).
 
 **AFA product (CMake stubs, MM `NO_MM_ROM` off):** same **`phase6_materialize_no_mm_engine_files.ps1`**, then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -AfaProduct`** (or **`-Mode All -AfaProduct`**). Same as **`-DAEROASSAULT64_AFA_PRODUCT=ON`** — skips MM **`patches.elf`** / **`patches.toml`** like **`NO_MM_ROM`**; see **`lib/Zelda64Recomp/CMakeLists.txt`** **`option(AEROASSAULT64_AFA_PRODUCT …)`** and **`config/afa_rsp/README.txt`**.
 
