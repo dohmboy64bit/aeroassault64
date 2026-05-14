@@ -16,7 +16,8 @@
 # Older Ghidra: MemoryBlock has no getBody(); this script uses AddressRangeImpl + AddressSet instead.
 # PyGhidra: getReferencesFrom may return Reference[] (no hasNext) — see _iter_references_from().
 # Companion: tools/ghidra/RSP_LibUltra_And_IMEM_Scan.py (symbol / IMEM immediate / ASCII scans);
-# tools/ghidra/RSP_Scheduler_String_Xref_Trace.py (incoming xref from rodata -> functions -> .rom refs).
+# tools/ghidra/RSP_Scheduler_String_Xref_Trace.py (incoming xref from rodata -> functions -> .rom refs);
+# tools/ghidra/RSP_IMEM_Load_And_Helper_Call_Trace.py (0x0400… SP immediates + optional jal windows).
 #
 #@runtime PyGhidra
 #@category AeroAssault64
