@@ -44,6 +44,6 @@ One-time add (already done in this repo; for reference only):
 - **MIPS ELF + splat:** root **`Makefile`** / **`config/splat.yaml`** — unchanged by the submodule.
 - **Static recomp:** this repo already documents **`tools/N64Recomp.exe`** (**`tools/README.txt`**, commit **81213c18…**). Align with whatever revision **Zelda64Recomp** expects for in-tree N64Recomp builds, or keep using the vendored **`tools/`** PE if the engine docs allow it.
 - **Game TOML:** **`config/aerofighters_assault.n64recomp.toml`** — wire into the port template the engine provides (see Zelda64Recomp docs and **`Docs/RepoInjests/`** for TOML patterns).
-- **Glue / overrides:** **`src/README.txt`**, **`patches/README.txt`**, **`Docs/Workflow.md`** § Phase 6.
+- **Glue / overrides:** **`src/README.txt`**, **`patches/README.txt`**, **`Docs/Workflow.md`** § Phase 6 (including **fork touchpoints** table vs stock MM **`CMakeLists.txt`**).
 
 Do not duplicate generated **`RecompiledFuncs/*.c`** into **`lib/`** as separate copies — regenerate under **repo-root** **`RecompiledFuncs/`** only, then use **`tools/phase6_link_recompiledfuncs.ps1`** (junction) or a fork that changes upstream globs.

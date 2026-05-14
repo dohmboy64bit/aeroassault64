@@ -258,9 +258,23 @@ Phase **4** is **closed at smoke level** when: **`make strict-verify`** is docum
 ### Phase 6 checklist
 
 - [x] **`lib/Zelda64Recomp`** present as submodule (**`dev`**); **`git submodule update --init --recursive`** documented in **`lib/README.txt`**. **Pin:** **`ab677e76615e5e47b3b26c822ca426485752ac77`** (**2026-05-13**).
-- [x] Interim **`tools/phase6_link_recompiledfuncs.ps1`** — junction so **`lib/Zelda64Recomp/RecompiledFuncs`** matches repo-root **`RecompiledFuncs/`** (upstream **`file(GLOB ${CMAKE_SOURCE_DIR}/RecompiledFuncs/*.c)`** vs TOML **`output_func_path`** — **`lib/README.txt`**).
+- [x] **Fork touchpoint map** — **`Docs/Workflow.md`** § Phase 6 fork touchpoints + **`patches/README.txt`** (repo **`patches/`** vs **`lib/Zelda64Recomp/patches/`**).
 - [ ] In-tree or fork **CMake** that builds **Aero Fighters Assault** + links this repo’s **`RecompiledFuncs/`** output (regenerated locally; not committed except **`README.txt`** / **`.gitkeep`**).
 - [ ] First **PowerShell** / **VS** run of the **AFA** game binary (even if it exits early) — capture breakpoints and logging notes in **`Docs/Debugging.md`**.
+
+### Phase 6 fork touchpoints (upstream `lib/Zelda64Recomp`)
+
+Use this as a checklist when forking or replacing **Majora's Mask** assumptions. Paths are under **`lib/Zelda64Recomp/`** unless noted; primary build logic is **`lib/Zelda64Recomp/CMakeLists.txt`**.
+
+| Area | Upstream files / CMake | AFA direction |
+|------|-------------------------|---------------|
+| CPU static recomp | **`us.rev1.toml`**, **`./N64Recomp us.rev1.toml`** (**`lib/Zelda64Recomp/BUILDING.md`** § 4) | Add an AFA TOML (or symlink) and wire **`N64Recomp`** the same way; this repo already drives **`tools/N64Recomp.exe`** with **`config/aerofighters_assault.n64recomp.toml`** for ELF output. |
+| **`RecompiledFuncs/`** | **`file(GLOB … ${CMAKE_SOURCE_DIR}/RecompiledFuncs/*.c)`** / **`*.cpp`** (same **`CMakeLists.txt`**) | Keep output under one tree; interim: **`tools/phase6_link_recompiledfuncs.ps1`** / symlink (**`lib/README.txt`**). |
+| RSP microcode | **`rsp/aspMain.cpp`**, **`rsp/njpgdspMain.cpp`** (gitignored; **`rsp/.gitignore`**); **`./RSPRecomp *.toml`** | Regenerate from AFA RSP TOMLs or stub until RSP is ported. |
+| Patch ELF + **`RecompiledPatches/`** | Engine **`patches/`** **`Makefile`** → **`patches.elf`**; **`./N64Recomp patches.toml`** → **`RecompiledPatches/patches.c`** etc. (**`CMakeLists.txt`** custom commands) | Not the same as repo-root **`patches/`** — see **`patches/README.txt`**. Needs an AFA **`patches.toml`** + MIPS patch sources under the **engine** tree. |
+| Game + UI C++ | **`src/game/*`**, **`src/main/*`**, **`src/ui/*`**, **`rsp/*.cpp`** in **`SOURCES`** | Replace MM-specific ROM load, scenes, assets with AFA logic; keep **`RT64Context`** / **`ultramodern`** boundaries where possible. |
+| Project / binary name | **`project(Zelda64Recompiled …)`**, executable **`Zelda64Recompiled`** | Cosmetic / packaging rename in a fork. |
+| Assets / runtime | **`BUILDING.md`** § 6 (run EXE from project root or copy **`assets/`**) | AFA **`assets/`** / RT64 paths after de-MM the tree. |
 
 ---
 
