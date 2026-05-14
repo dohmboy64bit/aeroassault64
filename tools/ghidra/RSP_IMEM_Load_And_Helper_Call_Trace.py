@@ -7,7 +7,8 @@
 # Static analysis cannot prove register values at jal sites — this script gives *where* those
 # constants appear and *where* calls to your helper happen so you can read a0-a3 in Listing.
 # For callee **entry** hex values, run tools/ghidra/RSP_List_Jal_Callees_From_Function.py
-# (set SOURCE_FUNCTION_ENTRY_VRAM to this function, e.g. 0x8023D92C).
+# (set SOURCE_FUNCTION_ENTRY_VRAM to this function, e.g. 0x8023D92C). For all `jal` arg-setup
+# windows from that caller in one pass, run tools/ghidra/RSP_Jal_Call_Sites_Disasm_From_Caller.py.
 #
 # Hardware map: N64brew Memory map — SP DMEM/IMEM physical `0x04000000` region.
 # Docs: lib/Zelda64Recomp/AFA_PORT.md section 1; tools/ghidra/Find_RSP_Microcode_ROM_Hints.py

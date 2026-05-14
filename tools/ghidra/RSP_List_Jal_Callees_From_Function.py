@@ -146,6 +146,9 @@ def main():
     print(
         "Copy callee **entry** hex into RSP_IMEM_Load_And_Helper_Call_Trace.py -> HELPER_ENTRY_VRAM."
     )
+    print(
+        "Or run tools/ghidra/RSP_Jal_Call_Sites_Disasm_From_Caller.py to dump all `jal` windows from this caller in one pass."
+    )
     print("`jalr` / indirect calls are not scanned — use Listing xrefs for those.")
 
 
