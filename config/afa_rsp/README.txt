@@ -6,9 +6,7 @@ Upstream Zelda64Recomp expects generated sources:
   lib/Zelda64Recomp/rsp/aspMain.cpp
   lib/Zelda64Recomp/rsp/njpgdspMain.cpp
 
-Majora's Mask uses aspMain.us.rev1.toml / njpgdspMain.us.rev1.toml against the decompressed MM ROM
-(see lib/Zelda64Recomp/BUILDING.md section 4). AFA needs its own microcode ROM offsets from Ghidra / ROM
-analysis — do not point MM TOMLs at roms/afa.n64.us.z64 without re-deriving text_offset/text_size/text_address.
+Splat (`config/splat.yaml`, `Docs/Workflow.md` Phase 2–3) maps MIPS segments in the USA ROM; it does not emit RSPRecomp `text_offset` / `text_size` (those are microcode blob offsets in the same ROM file — fill templates from your Ghidra notes and commit when ready).
 
 Build options that use RSP stubs when rsp/*.cpp are missing (see lib/Zelda64Recomp/CMakeLists.txt _AERO_PATCH_RSP_STUBS):
   -DAEROASSAULT64_NO_MM_ROM=ON, or -DAEROASSAULT64_AFA_PRODUCT=ON without -DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON
