@@ -8,6 +8,8 @@
 # in Listing, run this script with **`TARGET_FUNCTION_ENTRY_VRAM`** set to that entry, then
 # follow **`lui`+`addiu`/`ori`**, **`.rom`** xrefs, or nested **`jal`** return paths toward
 # **`text_offset` / `text_size`** (see **`config/afa_rsp/*.template.toml`**, **`AFA_PORT.md`** §1).
+# After you have a concrete **`v0`** base (e.g. **0x802839B0**), run **RSP_RAM_Context_Field_Xrefs.py**
+# on **`+0x8` / `+0xC`** (and **`0`**) for incoming xrefs and stored pointers into **`.rom`**.
 #
 # **Limitation:** one listing-predecessor chain per return; merges across branches are wrong.
 # Verify with the decompiler. Same **`.ram`** block expectations as **`Phase2_Closeout_Report.py`**.
@@ -368,6 +370,7 @@ def main():
     else:
         print("Return sites processed: %d" % returns_found)
     print("Docs: lib/Zelda64Recomp/AFA_PORT.md section 1; RSPRecomp templates: config/afa_rsp/*.template.toml")
+    print("Next: if v0 is a constant RAM base, run tools/ghidra/RSP_RAM_Context_Field_Xrefs.py (BASE_VRAM, +0x8/+0xC).")
 
 
 main()

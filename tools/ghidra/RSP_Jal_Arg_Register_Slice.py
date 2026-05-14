@@ -437,7 +437,7 @@ def main():
     print("  text_offset / text_size — byte offset and length of ucode TEXT inside the same ROM as rom_file_path.")
     print("  text_address — IMEM VA the game uses for that task (templates suggest 0x04001000 / 0x04001080; verify).")
     print("  extra_indirect_branch_targets — aspMain often needs word offsets; njpgdsp may use [].")
-    print("Next: xref .rom from lw-immediate / lui+lo on v0/tables; confirm DMA path in Listing.")
+    print("Next: set BASE_VRAM from return-reg slice; run tools/ghidra/RSP_RAM_Context_Field_Xrefs.py (+0x8/+0xC).")
 
 
 main()
