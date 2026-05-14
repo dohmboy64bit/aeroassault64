@@ -71,12 +71,14 @@ ASCII_PATTERNS = (
 
 # Substrings observed in AFA USA rodata / error strings (Ghidra labels like s_uvGfxBegin…, s__uvDMA:…).
 # Pilotwings 64 is a Paradigm-era cross-check title (Docs/SystemPrompt.md); patterns may or may not match.
+# Ghidra default string labels often use '_' between words while the cart uses ASCII spaces (IDO-era
+# format strings): e.g. symbol `s_RSP_timeout_on_%c…` @ 802544ac vs bytes `RSP timeout on %c…`.
 PARADIGM_ASCII_PATTERNS = (
     b"uvGfxBegin",
     b"uvScDoneGfx",
     b"uvDMA:",
-    # Label s_RSP_timeout_on_%c… — cart text is "RSP_timeout_on…", not bare "RSP_timeout".
-    b"RSP_timeout_on",
+    b"RSP timeout on",
+    b"RDP timeout on",
 )
 
 
