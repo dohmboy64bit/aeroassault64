@@ -6,6 +6,7 @@
 # script walks the caller body only (not all xrefs in the binary). Same `.ram` as Phase2_Closeout.
 # Backward disasm: use getInstructionBefore(Address) or Instruction.getPrevious — not
 # getInstructionBefore(Instruction) (empty window in PyGhidra).
+# For summarized a0-a3 last-def at the same `jal` sites, run tools/ghidra/RSP_Jal_Arg_Register_Slice.py.
 #
 # Docs: lib/Zelda64Recomp/AFA_PORT.md section 1.
 #

@@ -19,7 +19,8 @@
 # tools/ghidra/RSP_Scheduler_String_Xref_Trace.py (incoming xref from rodata -> functions -> .rom refs);
 # tools/ghidra/RSP_IMEM_Load_And_Helper_Call_Trace.py (0x0400… SP immediates + optional jal windows);
 # tools/ghidra/RSP_List_Jal_Callees_From_Function.py (`jal` callee entries from a function body);
-# tools/ghidra/RSP_Jal_Call_Sites_Disasm_From_Caller.py (disasm before each `jal` from a caller).
+# tools/ghidra/RSP_Jal_Call_Sites_Disasm_From_Caller.py (disasm before each `jal` from a caller);
+# tools/ghidra/RSP_Jal_Arg_Register_Slice.py (heuristic last-def of a0-a3 + lw bases at selected jal).
 #
 #@runtime PyGhidra
 #@category AeroAssault64
