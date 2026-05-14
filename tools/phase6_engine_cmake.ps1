@@ -12,12 +12,14 @@
 # repo-root RecompiledFuncs/ (N64Recomp TOML output_func_path is ../RecompiledFuncs from config/).
 # Without -NoMmRom: upstream configure still needs Majora's Mask recomp steps (N64Recomp/RSPRecomp, rsp/*.cpp) per lib/Zelda64Recomp/BUILDING.md.
 # With -NoMmRom: run tools/phase6_materialize_no_mm_engine_files.ps1 first, then pass -DAEROASSAULT64_NO_MM_ROM=ON (see lib/README.txt).
+# -CiStub: run tools/phase6_ci_ensure_recompiledfuncs_stub.ps1 when RecompiledFuncs has no .c (matches CI / fresh clone).
 param(
     [ValidateSet('Configure', 'Build', 'All')]
     [string]$Mode = 'Configure',
     [string]$Generator = 'Ninja',
     [string]$BuildType = 'Release',
-    [switch]$NoMmRom
+    [switch]$NoMmRom,
+    [switch]$CiStub
 )
 $ErrorActionPreference = 'Stop'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -25,6 +27,9 @@ $EngineSource = Join-Path $RepoRoot 'lib\Zelda64Recomp'
 $BuildDir = Join-Path $RepoRoot 'build-engine'
 if (-not (Test-Path (Join-Path $EngineSource 'CMakeLists.txt'))) {
     Write-Error 'Missing engine tree. From repo root run: git submodule update --init --recursive'
+}
+if ($CiStub) {
+    & (Join-Path $PSScriptRoot 'phase6_ci_ensure_recompiledfuncs_stub.ps1')
 }
 $NoMmArgs = @()
 if ($NoMmRom) {

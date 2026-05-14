@@ -55,11 +55,11 @@ From repo root in **PowerShell** (requires **CMake** on `PATH`; default generato
   .\tools\phase6_engine_cmake.ps1 -Mode Build
   .\tools\phase6_engine_cmake.ps1 -Mode All
 
-**No MM ROM (CMake stubs):** run **`.\tools\phase6_materialize_no_mm_engine_files.ps1`** then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -NoMmRom`** (or **`-Mode All -NoMmRom`**). Same as passing **`-DAEROASSAULT64_NO_MM_ROM=ON`** to inner **`cmake`** — see **`lib/Zelda64Recomp/CMakeLists.txt`** and **`lib/README.txt`**.
+**No MM ROM (CMake stubs):** run **`.\tools\phase6_materialize_no_mm_engine_files.ps1`** then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -NoMmRom`** (or **`-Mode All -NoMmRom`**); add **`-CiStub`** when **`RecompiledFuncs/`** has no **`.c`** yet (same stub as CI). Same as passing **`-DAEROASSAULT64_NO_MM_ROM=ON`** to inner **`cmake`** — see **`lib/Zelda64Recomp/CMakeLists.txt`** and **`lib/README.txt`**.
 
 Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`** with **`cmake --build`** for that generator). Output directory: **`build-engine/`** (gitignored).
 
-**Visual Studio 2022 (MSVC) — recommended for full `Zelda64Recompiled.exe` link:** **`tools/phase6_engine_cmake_vs2022.ps1`** uses **`build-engine-vs2022/`** (do not mix with Ninja’s **`build-engine/`**). Same **`Mode`** / **`-NoMmRom`** pattern; build uses **`--config Release`** by default (override with **`-Configuration`**). Example:
+**Visual Studio 2022 (MSVC) — recommended for full `Zelda64Recompiled.exe` link:** **`tools/phase6_engine_cmake_vs2022.ps1`** uses **`build-engine-vs2022/`** (do not mix with Ninja’s **`build-engine/`**). Same **`Mode`** / **`-NoMmRom`** pattern; optional **`-CiStub`** matches **`tools/phase6_ci_ensure_recompiledfuncs_stub.ps1`** when **`RecompiledFuncs/`** has no generated **`.c`** (see **`.github/workflows/engine-windows.yml`**). Build uses **`--config Release`** by default (override with **`-Configuration`**). Example:
 
   .\tools\phase6_engine_cmake_vs2022.ps1 -Mode All -NoMmRom
 

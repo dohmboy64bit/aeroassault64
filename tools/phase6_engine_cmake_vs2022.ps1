@@ -9,6 +9,7 @@
 #   .\tools\phase6_link_recompiledfuncs.ps1
 # No-MM:   .\tools\phase6_materialize_no_mm_engine_files.ps1  then  -NoMmRom
 # Optional fork: -AfaRomXxh3Hex <16 hex digits> and/or -ExeOutputName AeroAssault64 (see lib/Zelda64Recomp/CMakeLists.txt).
+# CI parity: -CiStub runs tools/phase6_ci_ensure_recompiledfuncs_stub.ps1 when RecompiledFuncs has no .c (same as .github/workflows/engine-windows.yml).
 param(
     [ValidateSet('Configure', 'Build', 'All')]
     [string]$Mode = 'Configure',
@@ -16,6 +17,7 @@ param(
     [string]$Configuration = 'Release',
     [string]$Target = 'Zelda64Recompiled',
     [switch]$NoMmRom,
+    [switch]$CiStub,
     [string]$AfaRomXxh3Hex = '',
     [string]$ExeOutputName = '',
     [string]$VersionTag = '',
@@ -28,6 +30,10 @@ $BuildDir = Join-Path $RepoRoot 'build-engine-vs2022'
 
 if (-not (Test-Path (Join-Path $EngineSource 'CMakeLists.txt'))) {
     Write-Error 'Missing engine tree. From repo root run: git submodule update --init --recursive'
+}
+
+if ($CiStub) {
+    & (Join-Path $PSScriptRoot 'phase6_ci_ensure_recompiledfuncs_stub.ps1')
 }
 
 $NoMmArgs = @()
