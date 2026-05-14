@@ -43,6 +43,22 @@ Zelda64Recomp also documents in-tree builds in Docs/RepoInjests/Zelda64/zelda64r
 
 ---
 
+Phase 6 (Zelda64Recomp engine, Windows CMake)
+
+Upstream **`lib/Zelda64Recomp`** must be the **CMake source directory** (see **`lib/README.txt`** — **`CMAKE_SOURCE_DIR`** paths in upstream **`CMakeLists.txt`**).
+
+From repo root in **PowerShell** (requires **CMake** on `PATH`; default generator **Ninja**):
+
+  .\tools\phase6_engine_cmake.ps1 -Mode Configure
+  .\tools\phase6_engine_cmake.ps1 -Mode Build
+  .\tools\phase6_engine_cmake.ps1 -Mode All
+
+Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`** with **`cmake --build`** for that generator). Output directory: **`build-engine/`** (gitignored).
+
+Follow **`lib/Zelda64Recomp/BUILDING.md`** for ROM extraction, nested submodules, and RT64 prerequisites before expecting configure to succeed.
+
+---
+
 Phase 5 (N64Recomp, Windows)
 
 Prerequisite: WSL (or Linux) **`make strict-verify`** (or at least **`make`**) so **`build/aerofighters_assault.elf`** exists — same artifact as **`config/splat.yaml`** **`elf_path`**.

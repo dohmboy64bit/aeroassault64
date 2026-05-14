@@ -242,21 +242,23 @@ Phase **4** is **closed at smoke level** when: **`make strict-verify`** is docum
 ### Prerequisites
 
 - Phase **4** ELF + Phase **5** smoke recomp path understood (**`Docs/Workflow.md`** § 4–5).
-- Pick an engine **git revision** to pin (record in **`lib/README.txt`** or a future **`lib/.gitmodules`** comment when the submodule lands).
+- Engine revision is recorded in **`lib/README.txt`** and **`.gitmodules`** (**`branch = dev`**; full SHA in **`lib/README.txt`**).
 
 ### Commands / files
 
 | Step | Notes |
 |------|--------|
-| Add engine | **`git submodule add … lib/Zelda64Recomp`** (exact URL in **`lib/README.txt`**) |
+| Init engine | From repo root: **`git submodule update --init --recursive`** — pulls **`lib/Zelda64Recomp`** and nested deps (see **`.gitmodules`**, **`lib/README.txt`**). |
+| Configure / build | Root **`tools/phase6_engine_cmake.ps1`** — runs **`cmake -S lib/Zelda64Recomp -B build-engine …`** (upstream **`CMakeLists.txt`** expects that tree as **`CMAKE_SOURCE_DIR`**; see **`lib/README.txt`**). Or run the same **`cmake`** lines manually. Follow **`lib/Zelda64Recomp/BUILDING.md`** for MM ROM / toolchain prerequisites until an AFA fork exists. |
 | Game layer | Empty tree for now — read **`src/README.txt`** and **`patches/README.txt`** |
 | Debug | **`Docs/Debugging.md`** — Visual Studio against the engine-generated **Windows PE** once CMake exists |
 
 ### Phase 6 checklist
 
-- [ ] **`lib/Zelda64Recomp`** (or chosen fork) present; **`git submodule update --init --recursive`** documented.
-- [ ] Root or in-tree **CMake** that builds the port + links **`RecompiledFuncs/`** output (regenerated locally; not committed except **`README.txt`** / **`.gitkeep`**).
-- [ ] First **PowerShell** / **VS** run of the game binary (even if it exits early) — capture breakpoints and logging notes in **`Docs/Debugging.md`**.
+- [x] **`lib/Zelda64Recomp`** present as submodule (**`dev`**); **`git submodule update --init --recursive`** documented in **`lib/README.txt`**. **Pin:** **`ab677e76615e5e47b3b26c822ca426485752ac77`** (**2026-05-13**).
+- [x] Root **CMake helper** that configures upstream from **`lib/Zelda64Recomp`** with **`binaryDir`** at repo root — **`tools/phase6_engine_cmake.ps1`** (does **not** yet wire **AFA** **`RecompiledFuncs/`** or TOML; that is fork / superproject work).
+- [ ] In-tree or fork **CMake** that builds **Aero Fighters Assault** + links this repo’s **`RecompiledFuncs/`** output (regenerated locally; not committed except **`README.txt`** / **`.gitkeep`**).
+- [ ] First **PowerShell** / **VS** run of the **AFA** game binary (even if it exits early) — capture breakpoints and logging notes in **`Docs/Debugging.md`**.
 
 ---
 

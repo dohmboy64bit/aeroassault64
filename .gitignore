@@ -12,6 +12,8 @@ Docs/Rom/*.v64
 
 # Build outputs
 build/
+build-engine/
+build-engine-vs2022/
 out/
 cmake-build-*/
 CMakeFiles/

@@ -1,0 +1,4 @@
+[submodule "lib/Zelda64Recomp"]
+	path = lib/Zelda64Recomp
+	url = https://github.com/Mr-Wiseguy/Zelda64Recomp.git
+	branch = dev
