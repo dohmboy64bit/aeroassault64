@@ -95,6 +95,8 @@ Visual Studio: open the **AeroAssault64** repo folder, pick preset **`engine-sup
 
 Optional: **`-WhatIf`** lists destinations only. Same binaries as Phase 5 (**`tools/README.txt`**); not a substitute for MM ROM / TOML runs.
 
+**RSP C++ (Majora's Mask, BUILDING.md §4):** after **`mm.us.rev1.rom_uncompressed.z64`** is in **`lib/Zelda64Recomp/`** (§3), run **`.\tools\phase6_rsprecomp_engine.ps1`** — invokes **`RSPRecomp.exe`** on **`aspMain.us.rev1.toml`** and **`njpgdspMain.us.rev1.toml`**, producing **`lib/Zelda64Recomp/rsp/aspMain.cpp`** and **`njpgdspMain.cpp`** (gitignored upstream). Optional **`-CopyTools`** runs **`phase6_copy_n64recomp_to_engine.ps1`** first; **`-WhatIf`** prints intent only.
+
 Optional: **`make phase6-mm-prereq`** (**`python3 tools/phase6_mm_engine_prereq_check.py`**) — lists missing **Majora's Mask** engine files per **`lib/Zelda64Recomp/BUILDING.md`** (ROM, generated **`rsp/*.cpp`**, **`RecompiledPatches/`**). Append **`--strict`** to exit non-zero if anything required is missing. Not run by **`make check`**.
 
 Follow **`lib/Zelda64Recomp/BUILDING.md`** for ROM extraction, nested submodules, and RT64 prerequisites before expecting configure to succeed.

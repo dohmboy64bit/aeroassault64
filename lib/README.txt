@@ -22,7 +22,7 @@ Upstream **`lib/Zelda64Recomp/CMakeLists.txt`** uses **`CMAKE_SOURCE_DIR`** for 
 - **MM prerequisite audit:** **`make phase6-mm-prereq`** (repo root, needs **`make`** + Python) or **`python3 tools/phase6_mm_engine_prereq_check.py`** — lists gaps vs **`lib/Zelda64Recomp/BUILDING.md`**; **`--strict`** fails if required files are missing.
 - **Manual (same layout):**  
   `cmake -S lib/Zelda64Recomp -B build-engine -G Ninja -DCMAKE_BUILD_TYPE=Release`  
-  then **`cmake --build build-engine`** (after satisfying **BUILDING.md** prerequisites).
+  then **`cmake --build build-engine`** (after satisfying **BUILDING.md** prerequisites). For **RSP** outputs **`rsp/aspMain.cpp`** / **`rsp/njpgdspMain.cpp`** (MM ROM in engine root), run **`tools/phase6_rsprecomp_engine.ps1`** (**`tools/README.txt`**).
 
 ### No Majora's Mask ROM (stub PatchesLib + RSP)
 
