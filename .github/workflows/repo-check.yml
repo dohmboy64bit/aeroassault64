@@ -1,0 +1,26 @@
+# ROM-free checks: splat.yaml rodata list vs Ghidra Phase3 script + Python syntax.
+# Does not run splat split, make, or N64Recomp (no ROM / ELF / Windows PE on ubuntu-latest).
+name: repo-check
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: RODATA tuple vs splat.yaml
+        run: python3 tools/verify_rodata_splits_sync.py
+
+      - name: py_compile tools/*.py
+        run: |
+          python3 -m py_compile \
+            tools/dedupe_post_data_bss.py \
+            tools/n64recomp_stub_until_green.py \
+            tools/verify_rodata_splits_sync.py \
+            tools/gen_splat_extern_ld.py

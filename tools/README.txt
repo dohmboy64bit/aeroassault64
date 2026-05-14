@@ -4,9 +4,7 @@ Phase 4 (MIPS ELF, WSL): from repo root run `make` then `make verify` (see root 
 
 **BSS vs `post_data` duplicates:** after `splat split`, build `build/asm/post_data.o` once (`make build/asm/post_data.o`), run `make dedupe-bss` (`tools/dedupe_post_data_bss.py --apply`), then `make LINK_STRICT=1 verify` to link **without** `--allow-multiple-definition`. Shorthand: **`make strict-verify`**. See script docstring and `Makefile` comments.
 
-**Ghidra / splat rodata sync:** `python3 tools/verify_rodata_splits_sync.py` or **`make verify-rodata-sync`** — **`tools/ghidra/Phase3_Closeout_Report.py`** **`RODATA_ROM_SPLITS`** must match **`config/splat.yaml`** **`main`** **`rodata`** ROM starts (see `tools/ghidra/README.txt`).
-
----
+**Ghidra / splat rodata sync:** `python3 tools/verify_rodata_splits_sync.py` or **`make verify-rodata-sync`** — **`tools/ghidra/Phase3_Closeout_Report.py`** **`RODATA_ROM_SPLITS`** must match **`config/splat.yaml`** **`main`** **`rodata`** ROM starts (see `tools/ghidra/README.txt`). **`make check`** runs this plus **`py_compile`** on **`tools/*.py`** (no ROM; suitable for CI — see `.github/workflows/repo-check.yml`).
 
 N64Recomp and RSPRecomp (Windows PE, built from upstream)
 

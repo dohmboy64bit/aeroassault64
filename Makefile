@@ -2,7 +2,7 @@
 # Prerequisite: from repo root run `python3 -m splat split config/splat.yaml` so asm/, assets/ipl3.bin, and build/*.ld exist.
 # See Docs/Workflow.md and https://github.com/ethteck/splat/wiki/General-Workflow
 
-.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync
+.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync check
 
 .DEFAULT_GOAL := all
 
@@ -70,6 +70,11 @@ N64RECOMP_CFG ?= config/aerofighters_assault.n64recomp.toml
 n64recomp: $(ELF)
 	@test -f $(N64RECOMP_EXE) || (echo "Missing $(N64RECOMP_EXE)"; exit 1)
 	$(N64RECOMP_EXE) $(N64RECOMP_CFG)
+
+# ROM-free sanity (CI / quick local): Ghidra rodata tuple vs splat + Python syntax for tools/*.py
+check: verify-rodata-sync
+	python3 -m py_compile tools/dedupe_post_data_bss.py tools/n64recomp_stub_until_green.py tools/verify_rodata_splits_sync.py tools/gen_splat_extern_ld.py
+	@echo "OK: make check"
 
 # Ghidra Phase3: RODATA_ROM_SPLITS must match splat main rodata subsegments (stdlib check).
 verify-rodata-sync:
