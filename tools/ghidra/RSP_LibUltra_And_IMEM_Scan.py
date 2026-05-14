@@ -75,7 +75,8 @@ PARADIGM_ASCII_PATTERNS = (
     b"uvGfxBegin",
     b"uvScDoneGfx",
     b"uvDMA:",
-    b"RSP_timeout",
+    # Label s_RSP_timeout_on_%c… — cart text is "RSP_timeout_on…", not bare "RSP_timeout".
+    b"RSP_timeout_on",
 )
 
 
