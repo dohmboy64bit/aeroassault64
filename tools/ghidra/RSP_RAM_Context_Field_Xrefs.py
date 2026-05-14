@@ -35,6 +35,9 @@ FIELD_OFFSETS = (
 # Cap listing length per field (raise if truncated).
 MAX_REFS_TO_PRINT = 50
 
+# If True, try **`Memory.getBytes`** for 4 bytes at each field (undefined memory prints a note).
+READ_BE_WORD_AT_EACH_FIELD = True
+
 # If True, list **branch/jump** xrefs (FLOW) as well as **DATA** xrefs. FLOW hits mean “this
 # address is a label / jump table slot”, not “someone loaded the word here” — see printed `kind=`.
 SHOW_FLOW_INCOMING = True
