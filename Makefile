@@ -93,7 +93,7 @@ n64recomp: $(ELF)
 check: verify-splat-makefile-sync verify-rodata-sync verify-entrypoint-sync
 	python3 tools/verify_n64recomp_toml.py
 	python3 tools/verify_phase6_layout.py
-	python3 -m py_compile tools/dedupe_post_data_bss.py tools/n64recomp_stub_until_green.py tools/verify_rodata_splits_sync.py tools/verify_splat_makefile_sync.py tools/verify_entrypoint_sync.py tools/verify_n64recomp_toml.py tools/verify_phase6_layout.py tools/phase6_mm_engine_prereq_check.py tools/gen_splat_extern_ld.py
+	python3 -m py_compile tools/dedupe_post_data_bss.py tools/n64recomp_stub_until_green.py tools/verify_rodata_splits_sync.py tools/verify_splat_makefile_sync.py tools/verify_entrypoint_sync.py tools/verify_n64recomp_toml.py tools/verify_phase6_layout.py tools/phase6_mm_engine_prereq_check.py tools/gen_splat_extern_ld.py tools/compute_aero_rom_xxh3.py
 	@echo "OK: make check"
 
 # splat entry vram / symbol_addrs entrypoint / N64Recomp [input].entrypoint must agree.
