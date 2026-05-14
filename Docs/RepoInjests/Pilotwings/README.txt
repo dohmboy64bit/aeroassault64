@@ -15,4 +15,4 @@ At the time this README was added, that file contained (verify in browser or cur
   rom_file_path = "baserom.us.z64"
   extra_indirect_branch_targets = [ ... ]
 
-Ghidra workflow: import Pilotwings USA baserom with the same .rom / .ram block naming you use for AFA, then run the same AeroAssault64 PyGhidra scripts (Find_RSP_Microcode_ROM_Hints.py, RSP_LibUltra_And_IMEM_Scan.py). If PW still embeds libultra symbol names, the ASCII section may light up where AFA stayed dark; either way, compare how graphics init loads RSP text vs your AFA xrefs.
+Ghidra workflow: import Pilotwings USA baserom with the same .rom / .ram block naming you use for AFA, then run the same AeroAssault64 PyGhidra scripts (Find_RSP_Microcode_ROM_Hints.py, RSP_LibUltra_And_IMEM_Scan.py, RSP_Scheduler_String_Xref_Trace.py). If PW still embeds libultra symbol names, the ASCII section may light up where AFA stayed dark; either way, compare how graphics init loads RSP text vs your AFA xrefs.

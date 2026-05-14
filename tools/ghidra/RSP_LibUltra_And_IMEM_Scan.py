@@ -8,7 +8,7 @@
 # Ghidra runs still show `uvGfx` / `uvSc` / `uvDMA` scheduler rodata — see PARADIGM_ASCII_PATTERNS.
 #
 # Same project layout as Phase2_Closeout_Report.py: MemoryBlock `.rom` (cart) and `.ram` (MIPS).
-# Run: support/pyghidraRun.bat — Script Manager — this file.
+# Companion xref trace: tools/ghidra/RSP_Scheduler_String_Xref_Trace.py (rodata seeds -> callers -> .rom).
 #
 # Docs: lib/Zelda64Recomp/AFA_PORT.md section 1; N64brew memory map / libultra RSP task layout.
 #
