@@ -17,6 +17,7 @@ Upstream **`lib/Zelda64Recomp/CMakeLists.txt`** uses **`CMAKE_SOURCE_DIR`** for 
 - **Repo-root CMake (VS / presets):** **`CMakeLists.txt`** + **`CMakePresets.json`** — presets **`engine-superbuild-ninja-release`** and **`engine-superbuild-vs2022-release`** configure **`build-root/`** or **`build-root-vs2022/`** and drive **`ExternalProject_Add(zelda64recomp_engine)`** into **`build-engine/`** (same inner **`CMAKE_SOURCE_DIR`** as direct **`-S lib/Zelda64Recomp`**).
 - **Vendored recompilers (BUILDING.md § 4):** **`tools/phase6_copy_n64recomp_to_engine.ps1`** — copies **`tools/N64Recomp.exe`** and **`tools/RSPRecomp.exe`** into **`lib/Zelda64Recomp/`** (ignored by submodule **`*.gitignore`** **`*.exe`**).
 - **One-shot prep:** **`tools/phase6_setup_windows.ps1`** — junction + copy + **`verify_phase6_layout.py`** (see **`tools/README.txt`**).
+- **MM prerequisite audit:** **`make phase6-mm-prereq`** (repo root, needs **`make`** + Python) or **`python3 tools/phase6_mm_engine_prereq_check.py`** — lists gaps vs **`lib/Zelda64Recomp/BUILDING.md`**; **`--strict`** fails if required files are missing.
 - **Manual (same layout):**  
   `cmake -S lib/Zelda64Recomp -B build-engine -G Ninja -DCMAKE_BUILD_TYPE=Release`  
   then **`cmake --build build-engine`** (after satisfying **BUILDING.md** prerequisites).

@@ -29,6 +29,9 @@ jobs:
       - name: Phase 6 RecompiledFuncs layout
         run: python3 tools/verify_phase6_layout.py
 
+      - name: Phase 6 MM engine prereq audit (informational)
+        run: python3 tools/phase6_mm_engine_prereq_check.py
+
       - name: py_compile tools/*.py
         run: |
           python3 -m py_compile \
@@ -39,4 +42,5 @@ jobs:
             tools/verify_entrypoint_sync.py \
             tools/verify_n64recomp_toml.py \
             tools/verify_phase6_layout.py \
+            tools/phase6_mm_engine_prereq_check.py \
             tools/gen_splat_extern_ld.py

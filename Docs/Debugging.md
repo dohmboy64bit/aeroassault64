@@ -21,6 +21,9 @@
   - **`Cannot find source file: .../rsp/aspMain.cpp`** — **`rsp/.gitignore`** lists generated **`aspMain.cpp`** / **`njpgdspMain.cpp`**. Generate them with **RSPRecomp** per **`lib/Zelda64Recomp/BUILDING.md`** § 4 (**`./RSPRecomp aspMain.us.rev1.toml`** etc., from the **engine** root with MM artifacts).
   - **Missing `RecompiledPatches/patches.c`** — produced by the engine’s **`patches/`** + **`N64Recomp patches.toml`** pipeline (**`lib/Zelda64Recomp/CMakeLists.txt`** custom commands); not the same as AeroAssault64 **`patches/`** at repo root.
 - Open the generated solution or launch **`build-engine/Zelda64Recompiled.exe`** (upstream **`add_executable(Zelda64Recompiled)`** + **`CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}`** in **`lib/Zelda64Recomp/CMakeLists.txt`**) under **Visual Studio** for **Debug** / **RelWithDebInfo** once the target links. **Visual Studio** launch working directory is set to **`lib/Zelda64Recomp/`** (**`VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"`** in the same file) so relative **`assets/`** paths match **`lib/Zelda64Recomp/BUILDING.md`** § 6.
+
+- **MM baseline (until AFA fork):** run **`make phase6-mm-prereq`** (**`python3 tools/phase6_mm_engine_prereq_check.py`**) after **`tools/phase6_setup_windows.ps1`** — lists missing **`lib/Zelda64Recomp/BUILDING.md`** artifacts (decompressed ROM **`mm.us.rev1.rom_uncompressed.z64`**, generated **`rsp/*.cpp`**, **`RecompiledPatches/`**, etc.). Use **`--strict`** in scripts/CI when you require a complete MM tree. Then complete **BUILDING.md** sections 3–5 and debug **`build-engine/Zelda64Recompiled.exe`** (working directory = engine root per **`VS_DEBUGGER_WORKING_DIRECTORY`** in **`lib/Zelda64Recomp/CMakeLists.txt`**).
+
 - **AFA-specific** breakpoints and RT64 / recomp logging notes belong here as the port boots on a **forked** engine, not stock MM.
 
 ## Reference material

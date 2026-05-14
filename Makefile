@@ -2,7 +2,7 @@
 # Prerequisite: from repo root run `python3 -m splat split config/splat.yaml` so asm/, assets/ipl3.bin, and build/*.ld exist.
 # See Docs/Workflow.md and https://github.com/ethteck/splat/wiki/General-Workflow
 
-.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync verify-entrypoint-sync verify-phase6-layout check help
+.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync verify-entrypoint-sync verify-phase6-layout phase6-mm-prereq check help
 
 .DEFAULT_GOAL := all
 
@@ -17,6 +17,7 @@ help:
 	@echo "  make n64recomp      - run tools/N64Recomp.exe with N64RECOMP_CFG (needs $(ELF), often from WSL)"
 	@echo "  make check          - ROM-free: splat/Makefile + rodata + entrypoint + N64Recomp TOML + phase6 layout + py_compile tools"
 	@echo "  make verify-phase6-layout - python3 tools/verify_phase6_layout.py (RecompiledFuncs bridge vs engine)"
+	@echo "  make phase6-mm-prereq  - python3 tools/phase6_mm_engine_prereq_check.py (MM engine / BUILDING.md checklist)"
 	@echo "  make clean          - remove $(ELF), objects, extern ld"
 	@echo "See Docs/Workflow.md and tools/README.txt."
 
@@ -89,7 +90,7 @@ n64recomp: $(ELF)
 check: verify-splat-makefile-sync verify-rodata-sync verify-entrypoint-sync
 	python3 tools/verify_n64recomp_toml.py
 	python3 tools/verify_phase6_layout.py
-	python3 -m py_compile tools/dedupe_post_data_bss.py tools/n64recomp_stub_until_green.py tools/verify_rodata_splits_sync.py tools/verify_splat_makefile_sync.py tools/verify_entrypoint_sync.py tools/verify_n64recomp_toml.py tools/verify_phase6_layout.py tools/gen_splat_extern_ld.py
+	python3 -m py_compile tools/dedupe_post_data_bss.py tools/n64recomp_stub_until_green.py tools/verify_rodata_splits_sync.py tools/verify_splat_makefile_sync.py tools/verify_entrypoint_sync.py tools/verify_n64recomp_toml.py tools/verify_phase6_layout.py tools/phase6_mm_engine_prereq_check.py tools/gen_splat_extern_ld.py
 	@echo "OK: make check"
 
 # splat entry vram / symbol_addrs entrypoint / N64Recomp [input].entrypoint must agree.
@@ -107,6 +108,10 @@ verify-splat-makefile-sync:
 # Phase 6: when lib/Zelda64Recomp exists, RecompiledFuncs bridge must not split roots.
 verify-phase6-layout:
 	python3 tools/verify_phase6_layout.py
+
+# Phase 6: optional audit for stock Zelda64Recomp (MM) prerequisites (BUILDING.md). Not part of make check.
+phase6-mm-prereq:
+	python3 tools/phase6_mm_engine_prereq_check.py
 
 check-split:
 	@test -f $(LDSCRIPT) || (echo "Missing $(LDSCRIPT). Run: $(SPLAT) split $(SPLIT_CFG)"; exit 1)
