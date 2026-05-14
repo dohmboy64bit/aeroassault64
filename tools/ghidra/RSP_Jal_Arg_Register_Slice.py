@@ -4,6 +4,7 @@
 # Builds a linear insn window ending at each `jal` (+ delay slot), walks forward tracking the
 # last instruction that defines each GPR (via getResultObjects when available; else regex).
 # For `lw a2,0x8(s2)`-style args, also reports where **base** (`s2`) was last set in that window.
+# Optional: peel **or dst,src,zero** / **lw** chains from a2/a3 toward **v0** / stack (**DEPENDENCY_CHAIN_MAX**).
 #
 # **Limitation:** one predecessor chain only (getPrevious from `jal`); branches/loops can make
 # the reported def wrong — verify in Listing / decompiler. Same `.ram` as Phase2_Closeout.
@@ -31,6 +32,13 @@ BACKWARD_MAX = 100
 
 # Registers to report at each snapshot (after delay slot of `jal`).
 ARG_REGS = ("a0", "a1", "a2", "a3")
+
+# After a2/a3 reporting: peel `or dst,src,zero` / `addu dst,src,zero` and `lw dst,off(base)`
+# bases in the same linear window (stops at lui / unknown / depth).
+DEPENDENCY_CHAIN_MAX = 8
+
+# If True, also peel from a2/a3 defs that are register copies (e.g. or a2,s2,zero -> s2).
+FOLLOW_ARG_COPY_SRCS = True
 
 
 def get_block_exact(mem, name):
@@ -165,6 +173,57 @@ def _lw_dest_and_base(ins):
     return None, None
 
 
+def _copy_dest_src(ins):
+    """If insn is `or dst,src,zero` / `addu dst,src,zero`, return (dst, src). Else (None, None)."""
+    s = ins.toString().lower().replace("_", " ")
+    s = re.sub(r"\s+", " ", s).strip()
+    m = re.match(r"^or\s+(\w+)\s*,\s*(\w+)\s*,\s*(zero|r0)\s*$", s)
+    if m:
+        return m.group(1), m.group(2)
+    m = re.match(r"^addu\s+(\w+)\s*,\s*(\w+)\s*,\s*(zero|r0)\s*$", s)
+    if m:
+        return m.group(1), m.group(2)
+    return None, None
+
+
+def _dependency_seeds_from_arg_def(last_def, reg):
+    """Registers to peel toward ROM/struct clues (same-window last_def only)."""
+    seeds = set()
+    dins = last_def.get(reg)
+    if dins is None:
+        return seeds
+    dst, src = _copy_dest_src(dins)
+    if dst == reg and src and src not in ("zero", "r0"):
+        seeds.add(src)
+    ld, base = _lw_dest_and_base(dins)
+    if ld == reg and base and base not in ("zero", "r0"):
+        seeds.add(base)
+    return seeds
+
+
+def _expand_reg_deps(last_def, reg, indent, max_depth, depth, seen):
+    """Print copy/lw-base chain for one GPR within forward last_def map."""
+    if depth >= max_depth:
+        print("%s%s: (max depth)" % (indent, reg))
+        return
+    if reg in seen:
+        print("%s%s: (cycle)" % (indent, reg))
+        return
+    seen.add(reg)
+    dins = last_def.get(reg)
+    if dins is None:
+        print("%s%s: (no def in window — widen BACKWARD_MAX or read decompiler)" % (indent, reg))
+        return
+    print("%s%s <- %s" % (indent, reg, _fmt_def(dins)))
+    dst, src = _copy_dest_src(dins)
+    if dst == reg and src and src not in ("zero", "r0"):
+        _expand_reg_deps(last_def, src, indent + "  ", max_depth, depth + 1, seen)
+        return
+    ld, base = _lw_dest_and_base(dins)
+    if ld == reg and base and base not in ("zero", "r0"):
+        _expand_reg_deps(last_def, base, indent + "  ", max_depth, depth + 1, seen)
+
+
 def _forward_last_defs(block):
     """block: chronological insns ending with jal then optional delay. Return last_def dict."""
     last_def = {}
@@ -274,12 +333,27 @@ def main():
                 bs = last_def.get(b)
                 print("  (a3 loaded by lw @ %s uses base %s <- %s)" % (a3i.getAddress(), b, _fmt_def(bs)))
 
+        seeds = set()
+        if FOLLOW_ARG_COPY_SRCS:
+            seeds |= _dependency_seeds_from_arg_def(last_def, "a2")
+            seeds |= _dependency_seeds_from_arg_def(last_def, "a3")
+        if seeds:
+            print("  --- same-window copy/lw peel (s2/v0/… toward ROM or struct) ---")
+            for r in sorted(seeds):
+                _expand_reg_deps(last_def, r, "  ", DEPENDENCY_CHAIN_MAX, 0, set())
+
         print("")
         n += 1
 
     print("Slices printed: %d" % n)
     print("If defs look wrong past a branch, widen BACKWARD_MAX or read the decompiler.")
     print("Docs: lib/Zelda64Recomp/AFA_PORT.md section 1.")
+    print("")
+    print("RSPRecomp TOML (see config/afa_rsp/*.template.toml + upstream *.us.rev1.toml URLs there):")
+    print("  text_offset / text_size — byte offset and length of ucode TEXT inside the same ROM as rom_file_path.")
+    print("  text_address — IMEM VA the game uses for that task (templates suggest 0x04001000 / 0x04001080; verify).")
+    print("  extra_indirect_branch_targets — aspMain often needs word offsets; njpgdsp may use [].")
+    print("Next: xref .rom from lw-immediate / lui+lo on v0/tables; confirm DMA path in Listing.")
 
 
 main()
