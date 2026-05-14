@@ -13,6 +13,7 @@ Docs/Rom/*.v64
 # Build outputs
 build/
 build-root/
+build-root-no-mm/
 build-root-vs2022/
 build-engine/
 build-engine-vs2022/

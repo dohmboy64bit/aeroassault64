@@ -55,6 +55,8 @@ From repo root in **PowerShell** (requires **CMake** on `PATH`; default generato
   .\tools\phase6_engine_cmake.ps1 -Mode Build
   .\tools\phase6_engine_cmake.ps1 -Mode All
 
+**No MM ROM (CMake stubs):** run **`.\tools\phase6_materialize_no_mm_engine_files.ps1`** then **`.\tools\phase6_engine_cmake.ps1 -Mode Configure -NoMmRom`** (or **`-Mode All -NoMmRom`**). Same as passing **`-DAEROASSAULT64_NO_MM_ROM=ON`** to inner **`cmake`** — see **`lib/Zelda64Recomp/CMakeLists.txt`** and **`lib/README.txt`**.
+
 Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`** with **`cmake --build`** for that generator). Output directory: **`build-engine/`** (gitignored).
 
 Convenience (runs junction + copy + **`python tools/verify_phase6_layout.py`**):
@@ -65,6 +67,11 @@ Convenience (runs junction + copy + **`python tools/verify_phase6_layout.py`**):
 
   cmake --preset engine-superbuild-ninja-release
   cmake --build --preset engine-superbuild-ninja-release
+
+No-MM preset (forwards **`AEROASSAULT64_NO_MM_ROM`** to the engine; materialize **`RecompiledPatches/`** stubs first — **`tools/phase6_materialize_no_mm_engine_files.ps1`**):
+
+  cmake --preset engine-superbuild-ninja-release-no-mm
+  cmake --build --preset engine-superbuild-ninja-release-no-mm
 
 Visual Studio: open the **AeroAssault64** repo folder, pick preset **`engine-superbuild-vs2022-release`**, then build target **`zelda64recomp_engine`**. Outer dirs **`build-root/`**, **`build-root-vs2022/`**; inner **`build-engine/`** (see **`.gitignore`**).
 

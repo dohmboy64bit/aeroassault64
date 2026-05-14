@@ -7,12 +7,14 @@
 #
 # Before configure: run tools/phase6_link_recompiledfuncs.ps1 so engine CMake globs see
 # repo-root RecompiledFuncs/ (N64Recomp TOML output_func_path is ../RecompiledFuncs from config/).
-# Upstream configure still requires Majora's Mask recomp steps (N64Recomp/RSPRecomp, rsp/*.cpp) per lib/Zelda64Recomp/BUILDING.md.
+# Without -NoMmRom: upstream configure still needs Majora's Mask recomp steps (N64Recomp/RSPRecomp, rsp/*.cpp) per lib/Zelda64Recomp/BUILDING.md.
+# With -NoMmRom: run tools/phase6_materialize_no_mm_engine_files.ps1 first, then pass -DAEROASSAULT64_NO_MM_ROM=ON (see lib/README.txt).
 param(
     [ValidateSet('Configure', 'Build', 'All')]
     [string]$Mode = 'Configure',
     [string]$Generator = 'Ninja',
-    [string]$BuildType = 'Release'
+    [string]$BuildType = 'Release',
+    [switch]$NoMmRom
 )
 $ErrorActionPreference = 'Stop'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -21,15 +23,20 @@ $BuildDir = Join-Path $RepoRoot 'build-engine'
 if (-not (Test-Path (Join-Path $EngineSource 'CMakeLists.txt'))) {
     Write-Error 'Missing engine tree. From repo root run: git submodule update --init --recursive'
 }
+$NoMmArgs = @()
+if ($NoMmRom) {
+    $NoMmArgs += '-DAEROASSAULT64_NO_MM_ROM=ON'
+}
+
 switch ($Mode) {
     'Configure' {
-        cmake -S $EngineSource -B $BuildDir -G $Generator "-DCMAKE_BUILD_TYPE=$BuildType"
+        cmake -S $EngineSource -B $BuildDir -G $Generator "-DCMAKE_BUILD_TYPE=$BuildType" @NoMmArgs
     }
     'Build' {
         cmake --build $BuildDir --config $BuildType
     }
     'All' {
-        cmake -S $EngineSource -B $BuildDir -G $Generator "-DCMAKE_BUILD_TYPE=$BuildType"
+        cmake -S $EngineSource -B $BuildDir -G $Generator "-DCMAKE_BUILD_TYPE=$BuildType" @NoMmArgs
         cmake --build $BuildDir --config $BuildType
     }
 }

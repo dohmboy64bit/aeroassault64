@@ -6,6 +6,7 @@
 #
 # Prereqs: git submodule update --init --recursive; tools/phase6_setup_windows.ps1 (or junction +
 # copy PEs); full MM build still needs lib/Zelda64Recomp/BUILDING.md (ROM, RSP, patches pipeline).
+# Optional: -DAEROASSAULT64_NO_MM_ROM=ON skips MM patches/RSP file generation — see lib/README.txt "No Majora's Mask ROM".
 cmake_minimum_required(VERSION 3.20)
 project(AeroAssault64_engine_superbuild LANGUAGES C)
 
@@ -26,9 +27,14 @@ include(ExternalProject)
 set(_AFA_ENGINE_SRC "${CMAKE_SOURCE_DIR}/lib/Zelda64Recomp")
 set(_AFA_ENGINE_BIN "${CMAKE_SOURCE_DIR}/build-engine")
 
+option(AEROASSAULT64_NO_MM_ROM "Forward to engine: stub PatchesLib/RSP, skip MM patches pipeline (see tools/phase6_no_mm_engine)" OFF)
+
 set(_EP_CMAKE_ARGS "")
 if(CMAKE_BUILD_TYPE)
   list(APPEND _EP_CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+endif()
+if(AEROASSAULT64_NO_MM_ROM)
+  list(APPEND _EP_CMAKE_ARGS "-DAEROASSAULT64_NO_MM_ROM=ON")
 endif()
 
 ExternalProject_Add(

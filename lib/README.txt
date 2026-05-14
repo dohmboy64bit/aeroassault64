@@ -22,7 +22,19 @@ Upstream **`lib/Zelda64Recomp/CMakeLists.txt`** uses **`CMAKE_SOURCE_DIR`** for 
   `cmake -S lib/Zelda64Recomp -B build-engine -G Ninja -DCMAKE_BUILD_TYPE=Release`  
   then **`cmake --build build-engine`** (after satisfying **BUILDING.md** prerequisites).
 
-### Bridge `RecompiledFuncs/` (interim, Windows)
+### No Majora's Mask ROM (stub PatchesLib + RSP)
+
+Upstream **`lib/Zelda64Recomp/CMakeLists.txt`** defines **`option(AEROASSAULT64_NO_MM_ROM …)`** (after **`add_subdirectory(…/N64ModernRuntime)`**). When **ON**, **`PatchesLib`** is built from **`tools/phase6_no_mm_engine/*.c`** instead of **`RecompiledPatches/patches.c`** / **`patches_bin.c`**, and **`PatchesBin`** / **`N64Recomp patches.toml`** custom commands are omitted; **`rsp/aspMain.cpp`** and **`rsp/njpgdspMain.cpp`** are replaced by stub **`.cpp`** files in the same **`tools/phase6_no_mm_engine/`** directory.
+
+**`src/main/register_patches.cpp`** still includes **`../../RecompiledPatches/patches_bin.h`** and **`recomp_overlays.inl`** — run from repo root:
+
+  .\tools\phase6_materialize_no_mm_engine_files.ps1
+
+Then configure with **`-DAEROASSAULT64_NO_MM_ROM=ON`**, for example:
+
+  .\tools\phase6_engine_cmake.ps1 -Mode Configure -NoMmRom
+
+Or repo-root **`cmake --preset engine-superbuild-ninja-release-no-mm`** (forwards the flag via root **`CMakeLists.txt`**). This does **not** replace MM game code under **`src/game/`**; it only satisfies CMake/link for the patch blob and RSP sources documented in **BUILDING.md**.
 
 Upstream globs MIPS output only under **`${CMAKE_SOURCE_DIR}/RecompiledFuncs`** — see **`lib/Zelda64Recomp/CMakeLists.txt`** **`file(GLOB FUNC_C_SOURCES ${CMAKE_SOURCE_DIR}/RecompiledFuncs/*.c)`** (and **`*.cpp`**). This repo’s N64Recomp TOML writes to **repo-root** **`RecompiledFuncs/`** (**`config/aerofighters_assault.n64recomp.toml`** **`output_func_path = "../RecompiledFuncs"`** relative to **`config/`**, per N64Recomp **`src/config.cpp`** path rules in **`tools/README.txt`**).
 
