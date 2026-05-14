@@ -6,6 +6,7 @@
 # For `lw a2,0x8(s2)`-style args, also reports where **base** (`s2`) was last set in that window.
 # Optional: peel **or dst,src,zero** / **lw** chains from a2/a3 toward **v0** / stack (**DEPENDENCY_CHAIN_MAX**).
 # If **v0**/**v1** have no def in-window, prints last **jal** before the use (MIPS return registers).
+# For **`v0`/`v1` at each `jr ra`** inside a callee (e.g. **FUN_8023d820**), run **RSP_Function_Return_Reg_Slice.py**.
 #
 # **Limitation:** one predecessor chain only (getPrevious from `jal`); branches/loops can make
 # the reported def wrong — verify in Listing / decompiler. Same `.ram` as Phase2_Closeout.

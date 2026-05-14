@@ -7,6 +7,7 @@
 # Backward disasm: use getInstructionBefore(Address) or Instruction.getPrevious — not
 # getInstructionBefore(Instruction) (empty window in PyGhidra).
 # For summarized a0-a3 last-def at the same `jal` sites, run tools/ghidra/RSP_Jal_Arg_Register_Slice.py.
+# For v0/v1 before each `jr ra` in a callee named by that slice (e.g. FUN_8023d820), run tools/ghidra/RSP_Function_Return_Reg_Slice.py.
 #
 # Docs: lib/Zelda64Recomp/AFA_PORT.md section 1.
 #
