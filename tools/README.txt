@@ -14,7 +14,7 @@ Phase 4 (MIPS ELF, WSL): from repo root run `make` then `make verify` (see root 
 
 **N64Recomp TOML:** **`python3 tools/verify_n64recomp_toml.py`** — parse **`config/aerofighters_assault.n64recomp.toml`**, **`[input]`** keys, mutual exclusion of **`elf_path`** / **`symbols_file_path`** (N64Recomp **`src/main.cpp`**), **`entrypoint`** vs **`config/symbol_addrs.txt`**.
 
-**`make check`** runs **`verify-splat-makefile-sync`**, **`verify-rodata-sync`**, **`verify-entrypoint-sync`**, **`python3 tools/verify_n64recomp_toml.py`**, **`python3 tools/verify_phase6_layout.py`**, and **`py_compile`** **`tools/*.py`** (no ROM; CI — `.github/workflows/repo-check.yml`). Requires **Python 3.11+** (**`tomllib`**).
+**`make check`** runs **`verify-splat-makefile-sync`**, **`verify-rodata-sync`**, **`verify-entrypoint-sync`**, **`python3 tools/verify_n64recomp_toml.py`**, **`python3 tools/verify_phase6_layout.py`**, and **`py_compile`** **`tools/*.py`** (no ROM; CI — `.github/workflows/repo-check.yml`). MSVC engine partial build (stub **`RecompiledFuncs`** when no generated **`.c`**) — `.github/workflows/engine-windows.yml`; **`tools/phase6_ci_ensure_recompiledfuncs_stub.ps1`**. Requires **Python 3.11+** (**`tomllib`**).
 
 N64Recomp and RSPRecomp (Windows PE, built from upstream)
 
@@ -64,6 +64,8 @@ Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`**
   .\tools\phase6_engine_cmake_vs2022.ps1 -Mode All -NoMmRom
 
 **Smoke launch (cwd = engine root, matches `VS_DEBUGGER_WORKING_DIRECTORY`):** **`.\tools\phase6_smoke_engine.ps1`** (optional **`-Seconds`**, **`-Configuration`**, **`-BuildDir`**). With **`-NoMmRom`**, CMake uses **RSP stubs** unless both **`lib/Zelda64Recomp/rsp/aspMain.cpp`** and **`rsp/njpgdspMain.cpp`** exist (**`BUILDING.md`** §4 — RSPRecomp after MM TOMLs / your forked pipeline).
+
+**CI / clean clone (no generated `RecompiledFuncs/*.c`):** **`.\tools\phase6_ci_ensure_recompiledfuncs_stub.ps1`** — writes a one-file stub only when the directory has no **`.c`** sources so **`lib/Zelda64Recomp/CMakeLists.txt`** `add_library(RecompiledFuncs …)` is legal. A full **`Zelda64Recompiled.exe`** link still requires real N64Recomp output locally (see **`config/aerofighters_assault.n64recomp.toml`**).
 
 Convenience (runs junction + copy + **`python tools/verify_phase6_layout.py`**):
 

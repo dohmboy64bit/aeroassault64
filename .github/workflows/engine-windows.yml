@@ -1,0 +1,38 @@
+# MSVC configure + compile selected engine targets (no ROM; stub RecompiledFuncs when generated .c are absent).
+# Full Zelda64Recompiled.exe needs local N64Recomp output under RecompiledFuncs/ (gitignored); see Docs/Workflow.md Phase 5–6.
+name: engine-windows
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  msvc-libs:
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Ensure RecompiledFuncs CMake stub when no generated .c
+        shell: pwsh
+        run: .\tools\phase6_ci_ensure_recompiledfuncs_stub.ps1
+
+      - name: Materialize no-MM RecompiledPatches headers
+        shell: pwsh
+        run: .\tools\phase6_materialize_no_mm_engine_files.ps1
+
+      - name: Junction repo-root RecompiledFuncs into engine tree
+        shell: pwsh
+        run: .\tools\phase6_link_recompiledfuncs.ps1
+
+      - name: Configure engine (Visual Studio 2022, no-MM)
+        shell: pwsh
+        run: .\tools\phase6_engine_cmake_vs2022.ps1 -Mode Configure -NoMmRom
+
+      - name: Build RecompiledFuncs and PatchesLib (Release)
+        shell: pwsh
+        run: cmake --build build-engine-vs2022 --config Release --target RecompiledFuncs --target PatchesLib

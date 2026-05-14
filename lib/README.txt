@@ -1,7 +1,7 @@
 Engine submodule (**tracked**)
 
 Upstream: https://github.com/Mr-Wiseguy/Zelda64Recomp  
-**Branch tracked:** `dev` (see **`.gitmodules`**). **Pinned commit (this repo):** `b4e9a3839377f12eabecd884bf8e986ea45817e2` (`b4e9a38` short).
+**Branch tracked:** `dev` (see **`.gitmodules`**). **Gitlink (this repo):** run `git rev-parse HEAD:lib/Zelda64Recomp` after pull — tracks **`dev`** with AeroAssault64-specific commits (CMake / `main.cpp` / `aero_build_config.h.in`). Upstream remote in **`.gitmodules`** is **Mr-Wiseguy/Zelda64Recomp**; push fork commits to a remote you control and repoint the submodule if you cannot push to upstream.
 
 After a fresh clone from repo root:
 
