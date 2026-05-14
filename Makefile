@@ -2,9 +2,22 @@
 # Prerequisite: from repo root run `python3 -m splat split config/splat.yaml` so asm/, assets/ipl3.bin, and build/*.ld exist.
 # See Docs/Workflow.md and https://github.com/ethteck/splat/wiki/General-Workflow
 
-.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync check
+.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync check help
 
 .DEFAULT_GOAL := all
+
+help:
+	@echo "AeroAssault64 — common Makefile targets (WSL/Linux unless noted):"
+	@echo "  make split          - python3 -m splat split $(SPLIT_CFG)"
+	@echo "  make all            - link $(ELF) (needs asm/ + split output)"
+	@echo "  make verify         - readelf -h on $(ELF)"
+	@echo "  make elf-sanity     - assert entry 80200050 + MIPS in ELF header"
+	@echo "  make dedupe-bss     - strip duplicate BSS lines (needs post_data.o)"
+	@echo "  make strict-verify  - dedupe-bss + LINK_STRICT=1 verify + elf-sanity"
+	@echo "  make n64recomp      - run tools/N64Recomp.exe with N64RECOMP_CFG (needs $(ELF), often from WSL)"
+	@echo "  make check          - ROM-free: rodata sync + splat/Makefile sync + N64Recomp TOML + py_compile tools"
+	@echo "  make clean          - remove $(ELF), objects, extern ld"
+	@echo "See Docs/Workflow.md and tools/README.txt."
 
 SPLAT        ?= python3 -m splat
 SPLIT_CFG    := config/splat.yaml
@@ -72,14 +85,18 @@ n64recomp: $(ELF)
 	$(N64RECOMP_EXE) $(N64RECOMP_CFG)
 
 # ROM-free sanity (CI / quick local): Ghidra rodata tuple vs splat + Python syntax for tools/*.py
-check: verify-rodata-sync
+check: verify-splat-makefile-sync verify-rodata-sync
 	python3 tools/verify_n64recomp_toml.py
-	python3 -m py_compile tools/dedupe_post_data_bss.py tools/n64recomp_stub_until_green.py tools/verify_rodata_splits_sync.py tools/verify_n64recomp_toml.py tools/gen_splat_extern_ld.py
+	python3 -m py_compile tools/dedupe_post_data_bss.py tools/n64recomp_stub_until_green.py tools/verify_rodata_splits_sync.py tools/verify_splat_makefile_sync.py tools/verify_n64recomp_toml.py tools/gen_splat_extern_ld.py
 	@echo "OK: make check"
 
 # Ghidra Phase3: RODATA_ROM_SPLITS must match splat main rodata subsegments (stdlib check).
 verify-rodata-sync:
 	python3 tools/verify_rodata_splits_sync.py
+
+# splat options.basename / elf_path stem must match Makefile ELF / ld script names.
+verify-splat-makefile-sync:
+	python3 tools/verify_splat_makefile_sync.py
 
 check-split:
 	@test -f $(LDSCRIPT) || (echo "Missing $(LDSCRIPT). Run: $(SPLAT) split $(SPLIT_CFG)"; exit 1)
