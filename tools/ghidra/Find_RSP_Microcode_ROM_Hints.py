@@ -1,0 +1,288 @@
+# -*- coding: utf-8 -*-
+# Ghidra (PyGhidra): suggest ROM file offsets for RSPRecomp `text_offset` (AFA USA cart).
+#
+# RSPRecomp expects `text_offset` / `text_size` as byte offsets into the same ROM image as
+# `rom_file_path` (see config/afa_rsp/*.template.toml and upstream aspMain.us.rev1.toml on
+# Zelda64Recomp — same key names). Splat `config/splat.yaml` does not emit these; this script
+# surfaces *candidates* by finding MIPS code and defined pointers in `.ram` that reference
+# addresses inside Ghidra's `.rom` block (same layout as tools/ghidra/Phase2_Closeout_Report.py).
+#
+# This is heuristic output — verify in the Listing (xref, DMA / OSTask context) before committing
+# values to `aspMain.afa.us.toml` / `njpgdspMain.afa.us.toml`. `text_address` is usually
+# 0x04001000 (aspMain) and 0x04001080 (njpgdspMain) for libultra-style tasks; confirm against
+# your game's `OSTask` setup (N64brew memory map / libultra docs).
+#
+# Run: Ghidra 12+ with support/pyghidraRun.bat — Script Manager — this file under tools/ghidra.
+#
+#@runtime PyGhidra
+#@category AeroAssault64
+#@name Find_RSP_Microcode_ROM_Hints
+#@description Heuristic ROM offsets referenced from .ram for RSPRecomp text_offset discovery
+#@author AeroAssault64
+
+from __future__ import print_function
+
+from collections import Counter
+
+# --- Tunables -----------------------------------------------------------------
+# Ignore ROM header / very low offsets (BIOS string area, etc.).
+MIN_ROM_OFFSET = 0x1000
+# Report at least this many hits for an offset to reduce noise (lower = more output).
+MIN_HITS = 2
+# How many rows to print from the merged histogram.
+TOP_N = 40
+# Typical IMEM bases for Zelda64Recomp-style TOMLs (informational only).
+TEXT_ADDR_ASP = 0x04001000
+TEXT_ADDR_NJPG = 0x04001080
+
+
+def get_block_exact(mem, name):
+    for b in mem.getBlocks():
+        if b.getName() == name:
+            return b
+    return None
+
+
+def rom_file_offset(rom, addr):
+    """Byte offset into cart image if addr lies in .rom; else None."""
+    if rom is None or addr is None:
+        return None
+    if not rom.contains(addr):
+        return None
+    return int(addr.getOffset() - rom.getStart().getOffset())
+
+
+def _scalar_unsigned(obj):
+    try:
+        from ghidra.program.model.scalar import Scalar
+
+        if isinstance(obj, Scalar):
+            return int(obj.getUnsignedValue()) & 0xFFFFFFFF
+    except Exception:
+        pass
+    return None
+
+
+def _first_register_name(ins, op_index):
+    """Return first Register operand object name at op_index, or None."""
+    try:
+        from ghidra.program.model.lang import Register
+
+        for ob in ins.getOpObjects(op_index):
+            if isinstance(ob, Register):
+                return ob.getName()
+    except Exception:
+        pass
+    return None
+
+
+def _lui_upper(ins):
+    """Return (dest_reg, upper_16_as_uint32) for a LUI, or None."""
+    if ins is None:
+        return None
+    if ins.getMnemonicString().lower() != "lui":
+        return None
+    if ins.getNumOperands() < 2:
+        return None
+    dest = _first_register_name(ins, 0)
+    imm = None
+    for ob in ins.getOpObjects(1):
+        v = _scalar_unsigned(ob)
+        if v is not None:
+            imm = v & 0xFFFF
+            break
+    if dest is None or imm is None:
+        return None
+    return (dest, imm << 16)
+
+
+def _addiu_or_ori_imm(ins):
+    mn = ins.getMnemonicString().lower()
+    if mn not in ("addiu", "addi", "ori", "daddiu", "daddi"):
+        return None
+    if ins.getNumOperands() < 3:
+        return None
+    # MIPS: ADDIU rt, rs, imm  -> operands 0=rt, 1=rs, 2=imm (typical)
+    rt = _first_register_name(ins, 0)
+    rs = _first_register_name(ins, 1)
+    imm = None
+    for ob in ins.getOpObjects(2):
+        v = _scalar_unsigned(ob)
+        if v is not None:
+            imm = v & 0xFFFF
+            break
+    if rt is None or rs is None or imm is None:
+        return None, None, None, None
+    return mn, rt, rs, imm
+
+
+def _combine_hi_lo(mn, hi32, imm16):
+    """Combine LUI high half with lower from ADDIU (sign-ext) or ORI (zero-ext)."""
+    imm16 &= 0xFFFF
+    if mn in ("ori",):
+        return (hi32 & 0xFFFF0000) | imm16
+    # sign-extend 16-bit
+    if imm16 & 0x8000:
+        simm = imm16 - 0x10000
+    else:
+        simm = imm16
+    return (hi32 + simm) & 0xFFFFFFFF
+
+
+def _dump_rom_prefix(mem, rom, rom_off, nbytes):
+    rom_start = rom.getStart()
+    a = rom_start.add(rom_off)
+    parts = []
+    for i in range(nbytes):
+        if not mem.contains(a.add(i)):
+            break
+        parts.append("%02X" % (mem.getByte(a.add(i)) & 0xFF))
+    return " ".join(parts)
+
+
+def main():
+    prog = currentProgram  # noqa: F821
+    mem = prog.getMemory()
+    listing = prog.getListing()
+    ref_mgr = prog.getReferenceManager()
+
+    rom = get_block_exact(mem, ".rom")
+    ram = get_block_exact(mem, ".ram")
+    if rom is None:
+        print("ERROR: need a MemoryBlock named exactly `.rom` (see Phase2_Closeout_Report.py).")
+        return
+    if ram is None:
+        print("ERROR: need a MemoryBlock named exactly `.ram`.")
+        return
+
+    rom_start = rom.getStart()
+    hits = Counter()
+    lui_pair_hits = Counter()
+
+    # --- References from instructions in .ram into .rom ----------------------
+    ins_iter = listing.getInstructions(ram.getBody(), True)
+    while ins_iter.hasNext():
+        ins = ins_iter.next()
+        ref_iter = ref_mgr.getReferencesFrom(ins.getAddress())
+        while ref_iter.hasNext():
+            ref = ref_iter.next()
+            to_addr = ref.getToAddress()
+            off = rom_file_offset(rom, to_addr)
+            if off is not None and off >= MIN_ROM_OFFSET:
+                hits[off] += 1
+
+    # --- LUI + ADDIU/ORI immediate full-address into .rom ---------------------
+    pending_lui = {}  # reg_name -> (hi32, insn_addr_str)
+    ins_iter = listing.getInstructions(ram.getBody(), True)
+    while ins_iter.hasNext():
+        ins = ins_iter.next()
+        la = ins.getAddress()
+        lui = _lui_upper(ins)
+        if lui is not None:
+            reg, hi = lui
+            pending_lui[reg] = (hi, str(la))
+            continue
+
+        parsed = _addiu_or_ori_imm(ins)
+        if parsed[0] is None:
+            continue
+        mn, rt, rs, imm16 = parsed
+        if rs not in pending_lui:
+            continue
+        hi32, _ = pending_lui[rs]
+        full = _combine_hi_lo(mn, hi32, imm16) & 0xFFFFFFFF
+        # Resolve in the same AddressSpace as the cart image (see Phase2 — `.rom` block).
+        space = rom_start.getAddressSpace()
+        try:
+            to_addr = space.getAddress(int(full))
+        except Exception:
+            continue
+        if rom.contains(to_addr):
+            off = rom_file_offset(rom, to_addr)
+            if off is not None and off >= MIN_ROM_OFFSET:
+                lui_pair_hits[off] += 1
+        # Clear LUI slot after classic `lui r; addiu r, r, lo` (keep slot if `addiu t1, t0, lo` may pair again).
+        if mn.startswith("addi") and rt == rs:
+            pending_lui.pop(rs, None)
+
+    # --- Defined pointers (Data) in .ram to .rom ------------------------------
+    data_hits = Counter()
+    dit = listing.getDefinedData(ram.getBody(), True)
+    while dit.hasNext():
+        d = dit.next()
+        if not d.isPointer():
+            continue
+        try:
+            v = d.getValue()
+        except Exception:
+            continue
+        to_addr = None
+        try:
+            from ghidra.program.model.address import Address
+
+            if isinstance(v, Address):
+                to_addr = v
+        except Exception:
+            to_addr = None
+        if to_addr is None:
+            continue
+        off = rom_file_offset(rom, to_addr)
+        if off is not None and off >= MIN_ROM_OFFSET:
+            data_hits[off] += 1
+
+    merged = Counter()
+    for c in (hits, lui_pair_hits, data_hits):
+        merged.update(c)
+
+    print("=== Find_RSP_Microcode_ROM_Hints (AeroAssault64) ===")
+    print("Program: %s" % prog.getName())
+    print(
+        "ROM block: %s .. %s (file offsets 0 .. 0x%X)"
+        % (rom.getStart(), rom.getEnd(), int(rom.getEnd().getOffset() - rom_start.getOffset()))
+    )
+    print(
+        "Counts: insn_operand_refs=%d offsets, lui+imm_pairs=%d, data_pointers=%d"
+        % (len(hits), len(lui_pair_hits), len(data_hits))
+    )
+    print("")
+    print(
+        "Top ROM offsets (merged, min_hits=%d, min_off=0x%X). "
+        "High hit counts often include jump tables / rodata — still useful xrefs." % (MIN_HITS, MIN_ROM_OFFSET)
+    )
+    print("  offset     hits  insn_ref  lui_pair  data_ptr  first_bytes")
+    printed = 0
+    for off, cnt in merged.most_common():
+        if cnt < MIN_HITS:
+            continue
+        b = _dump_rom_prefix(mem, rom, off, 16)
+        print(
+            "  0x%06X  %4d  %4d  %4d  %4d  %s"
+            % (
+                off,
+                cnt,
+                hits.get(off, 0),
+                lui_pair_hits.get(off, 0),
+                data_hits.get(off, 0),
+                b,
+            )
+        )
+        printed += 1
+        if printed >= TOP_N:
+            break
+
+    if printed == 0:
+        print("  (no offsets met MIN_HITS — try lowering MIN_HITS in the script header)")
+
+    print("")
+    print("--- RSPRecomp TOML reminder (verify before use) ---")
+    print("  aspMain:       text_address = 0x%08X   # typical; confirm in OSTask / game code" % TEXT_ADDR_ASP)
+    print("  njpgdspMain:   text_address = 0x%08X" % TEXT_ADDR_NJPG)
+    print("  text_size:     NOT inferred here — use ucode length from docs, adjacent blob,")
+    print("                 or compare with a known-good recomp (e.g. upstream MM toml sizes).")
+    print("  extra_indirect_branch_targets: only for aspMain — see upstream aspMain.us.rev1.toml")
+    print("")
+    print("Next: pick 1–2 candidates, Go To offset in .rom, xref from .ram, confirm RSP/DMA context,")
+    print("      then run tools/phase6_rsprecomp_afa.ps1 after filling config/afa_rsp/*.template.toml.")
+
+
+main()

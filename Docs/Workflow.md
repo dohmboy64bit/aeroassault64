@@ -131,6 +131,7 @@ Work in a **non-shared** Ghidra project so imports and memory blocks stay under 
 6. **Main code region:** Bound the bulk of **.text** (start/end VRAM and ROM). Compare to splat’s **`main`** subsegments (asm / data / bss split at **0x4C050** etc.); note where **.rodata** and **.bss** really begin if different from splat’s first-pass hints.
 7. **Tail of ROM:** From the last defined segment to **0x800000** — what is it (more code, overlays, assets, padding)? This drives the final **`bin`** / named segments vs one big unknown.
 8. **Write-down:** Fill the table below in this file (or paste into chat / issue) so Phase 3 edits to `config/splat.yaml` are traceable.
+9. **RSPRecomp `text_offset` hints (Phase 6 engine):** If memory blocks match Phase 2 (**`.rom`**, **`.ram`**), run **`tools/ghidra/Find_RSP_Microcode_ROM_Hints.py`** in Ghidra (PyGhidra — same **`support/pyghidraRun.bat`** as **`Phase2_Closeout_Report.py`**). It prints a **histogram of ROM file offsets** referenced from RAM (operand xrefs + **`lui`/`addiu`** ROM pointers). Use it to **short-list** microcode blob locations; **confirm** in the Listing (DMA / **`OSTask`** / graphics init) before copying values into **`config/afa_rsp/*.template.toml`** — see **`lib/Zelda64Recomp/AFA_PORT.md`** §1.
 
 ### Ghidra findings log (fill in after session)
 
