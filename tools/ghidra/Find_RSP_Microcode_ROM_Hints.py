@@ -24,7 +24,7 @@
 
 from __future__ import print_function
 
-from collections import Counter
+from collections import Counter, defaultdict
 
 # --- Tunables -----------------------------------------------------------------
 # Ignore ROM header / very low offsets (BIOS string area, etc.).
@@ -36,6 +36,8 @@ TOP_N = 40
 # If the main table (min_hits=MIN_HITS) prints fewer than this many rows, also dump hits==1.
 SINGLE_HIT_APPEND_IF_PRIMARY_LT = 8
 SINGLE_HIT_APPEND_MAX = 30
+# Max .ram Data addresses to record per ROM offset (for "Go To" in Ghidra).
+MAX_DATA_RAM_REFS_PER_OFFSET = 8
 # Typical IMEM bases for Zelda64Recomp-style TOMLs (informational only).
 TEXT_ADDR_ASP = 0x04001000
 TEXT_ADDR_NJPG = 0x04001080
@@ -199,6 +201,32 @@ def _dump_rom_prefix(mem, rom, rom_off, nbytes):
     return " ".join(parts)
 
 
+def _leading_zero_run(mem, rom, rom_off, nbytes=32):
+    """Count leading 0x00 bytes at ROM offset (padding / BSS image in ROM)."""
+    a = rom.getStart().add(rom_off)
+    z = 0
+    for i in range(nbytes):
+        if not mem.contains(a.add(i)):
+            break
+        if (mem.getByte(a.add(i)) & 0xFF) != 0:
+            break
+        z += 1
+    return z
+
+
+def _print_row_hints(mem, rom, off, data_ram_refs):
+    """Continuation lines: where .ram pointer Data lives; padding heuristic."""
+    bits = []
+    refs = data_ram_refs.get(off)
+    if refs:
+        bits.append(".ram Data @ %s" % ", ".join(refs[:MAX_DATA_RAM_REFS_PER_OFFSET]))
+    zrun = _leading_zero_run(mem, rom, off)
+    if zrun >= 12:
+        bits.append("leading 0x00 x%d (not typical ucode start — check Data type / false pointer)" % zrun)
+    if bits:
+        print("       # " + " | ".join(bits))
+
+
 def main():
     prog = currentProgram  # noqa: F821
     mem = prog.getMemory()
@@ -263,6 +291,7 @@ def main():
 
     # --- Defined pointers (Data) in .ram to .rom ------------------------------
     data_hits = Counter()
+    data_ram_refs = defaultdict(list)
     dit = listing.getDefinedData(ram_addrs, True)
     for d in _iter_listing_cursor(dit):
         if not d.isPointer():
@@ -284,6 +313,8 @@ def main():
         off = rom_file_offset(rom, to_addr)
         if off is not None and off >= MIN_ROM_OFFSET:
             data_hits[off] += 1
+            if len(data_ram_refs[off]) < MAX_DATA_RAM_REFS_PER_OFFSET:
+                data_ram_refs[off].append(str(d.getAddress()))
 
     merged = Counter()
     for c in (hits, lui_pair_hits, data_hits):
@@ -328,6 +359,7 @@ def main():
                 b,
             )
         )
+        _print_row_hints(mem, rom, off, data_ram_refs)
         printed_offs.add(off)
         printed += 1
         if printed >= TOP_N:
@@ -343,6 +375,10 @@ def main():
             % SINGLE_HIT_APPEND_MAX
         )
         print("  (often noise — still worth xrefs for DMA/ucode; deduped from table above)")
+        print(
+            "  Isolated data_ptr rows: re-type the .ram Data in Ghidra if the value looks like a "
+            "bit-mask, not a cart offset (false Pointer)."
+        )
         sub = 0
         for off, cnt in merged.most_common():
             if cnt != 1 or off in printed_offs:
@@ -359,6 +395,7 @@ def main():
                     b,
                 )
             )
+            _print_row_hints(mem, rom, off, data_ram_refs)
             sub += 1
             if sub >= SINGLE_HIT_APPEND_MAX:
                 break
