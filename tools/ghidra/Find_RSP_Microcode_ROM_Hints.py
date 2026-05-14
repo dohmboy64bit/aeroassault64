@@ -149,11 +149,15 @@ def _lui_upper(ins):
 
 
 def _addiu_or_ori_imm(ins):
+    """Return (mn, rt, rs, imm16) or (None, None, None, None) — always a 4-tuple."""
+    _nil = (None, None, None, None)
+    if ins is None:
+        return _nil
     mn = ins.getMnemonicString().lower()
     if mn not in ("addiu", "addi", "ori", "daddiu", "daddi"):
-        return None
+        return _nil
     if ins.getNumOperands() < 3:
-        return None
+        return _nil
     # MIPS: ADDIU rt, rs, imm  -> operands 0=rt, 1=rs, 2=imm (typical)
     rt = _first_register_name(ins, 0)
     rs = _first_register_name(ins, 1)
@@ -164,7 +168,7 @@ def _addiu_or_ori_imm(ins):
             imm = v & 0xFFFF
             break
     if rt is None or rs is None or imm is None:
-        return None, None, None, None
+        return _nil
     return mn, rt, rs, imm
 
 
