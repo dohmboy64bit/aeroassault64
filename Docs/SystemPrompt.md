@@ -87,7 +87,7 @@ Keep `Docs/` current as the project grows: at minimum **`Workflow.md`**, **`Arch
 
 - **Game:** Aero Fighters Assault (USA)
 - **ROM path (local, gitignored):** `roms/afa.n64.us.z64`
-- **Active phase focus:** **Phase 6** — **`lib/Zelda64Recomp`** submodule (**`dev`**, pin in **`lib/README.txt`**); configure upstream with **`tools/phase6_engine_cmake.ps1`** or **`cmake -S lib/Zelda64Recomp -B build-engine`** (see **`tools/README.txt`**); then **`src/`** / **`patches/`** glue per **`src/README.txt`** / **`patches/README.txt`** and a fork or superproject to wire **AFA** TOML + **`RecompiledFuncs/`**; Phases **4–5** are smoke-complete (**`make strict-verify`** includes **`elf-sanity`**; **`config/aerofighters_assault.n64recomp.toml`** + **`tools/N64Recomp.exe`**).
+- **Active phase focus:** **Phase 6** — **`lib/Zelda64Recomp`** submodule (**`dev`**, pin in **`lib/README.txt`**); engine configure via **`tools/phase6_engine_cmake.ps1`**, **`cmake -S lib/Zelda64Recomp -B build-engine`**, or repo-root **`CMakeLists.txt`** / **`CMakePresets.json`** (**`ExternalProject_Add`** — **`Docs/Workflow.md`**); **`src/`** / **`patches/`** glue and an **AFA** fork (TOMLs, **`src/game`**, RSP, engine **`patches/`**) remain; Phases **4–5** are smoke-complete (**`make strict-verify`** includes **`elf-sanity`**; **`config/aerofighters_assault.n64recomp.toml`** + **`tools/N64Recomp.exe`**).
 
 ---
 

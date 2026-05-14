@@ -2,6 +2,9 @@
 # Upstream lib/Zelda64Recomp/CMakeLists.txt uses CMAKE_SOURCE_DIR for lib/rt64,
 # RecompiledFuncs/, etc.; the engine source root must be lib/Zelda64Recomp (see lib/README.txt).
 #
+# Alternative: repo-root CMakeLists.txt + CMakePresets.json (ExternalProject_Add) — same inner
+# SOURCE_DIR; outer build dir build-root/ (see Docs/Workflow.md § Phase 6).
+#
 # Before configure: run tools/phase6_link_recompiledfuncs.ps1 so engine CMake globs see
 # repo-root RecompiledFuncs/ (N64Recomp TOML output_func_path is ../RecompiledFuncs from config/).
 # Upstream configure still requires Majora's Mask recomp steps (N64Recomp/RSPRecomp, rsp/*.cpp) per lib/Zelda64Recomp/BUILDING.md.

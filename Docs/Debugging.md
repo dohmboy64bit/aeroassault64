@@ -13,7 +13,7 @@
 
 ## Phase 6 — Windows PE (engine)
 
-- After **`lib/Zelda64Recomp`** is present (**`git submodule update --init --recursive`**), build per **`lib/Zelda64Recomp/BUILDING.md`** (Majora's Mask **decompressed** ROM, in-tree **N64Recomp** / **RSPRecomp** runs, then CMake). Use **`tools/phase6_engine_cmake.ps1`** from the **AeroAssault64** repo root for **`cmake -S lib/Zelda64Recomp -B build-engine`** (**`tools/README.txt`** § Phase 6).
+- After **`lib/Zelda64Recomp`** is present (**`git submodule update --init --recursive`**), build per **`lib/Zelda64Recomp/BUILDING.md`** (Majora's Mask **decompressed** ROM, in-tree **N64Recomp** / **RSPRecomp** runs, then CMake). Use **`tools/phase6_engine_cmake.ps1`** from the **AeroAssault64** repo root for **`cmake -S lib/Zelda64Recomp -B build-engine`** (**`tools/README.txt`** § Phase 6), or **repo-root** **`cmake --preset engine-superbuild-ninja-release`** then **`cmake --build --preset engine-superbuild-ninja-release`** (**`CMakeLists.txt`** **`ExternalProject_Add`**, **`CMakePresets.json`**).
 - **RecompiledFuncs path:** run **`tools/phase6_link_recompiledfuncs.ps1`** so upstream CMake globs see **repo-root** **`RecompiledFuncs/`** (see **`lib/README.txt`**). Without this, **`add_library(RecompiledFuncs STATIC)`** can fail with **no SOURCES** even after Phase 5 N64Recomp.
 
 **Vendored recompilers:** run **`tools/phase6_copy_n64recomp_to_engine.ps1`** so **`lib/Zelda64Recomp/`** contains **`N64Recomp.exe`** and **`RSPRecomp.exe`** where **`lib/Zelda64Recomp/BUILDING.md`** § 4 expects them (after submodule init). Same binaries as **`tools/README.txt`** Phase 5; engine **`.gitignore`** ignores **`*.exe`** there.

@@ -8,4 +8,4 @@ N64Recomp-oriented port workspace for **Aero Fighters Assault (USA)**.
 
 ROM path (local): `roms/afa.n64.us.z64` — see `roms/README.txt`.
 
-**Phase 6 (engine):** **`lib/Zelda64Recomp`** is a submodule (**`dev`** branch; pin in **`lib/README.txt`**). Configure with **`tools/phase6_engine_cmake.ps1`** or **`cmake -S lib/Zelda64Recomp -B …`** — see **`lib/README.txt`**, **`tools/README.txt`** § Phase 6, and **`lib/Zelda64Recomp/BUILDING.md`** (upstream targets MM until forked for AFA).
+**Phase 6 (engine):** **`lib/Zelda64Recomp`** submodule (**`dev`**; pin in **`lib/README.txt`**). Configure the engine with **`tools/phase6_engine_cmake.ps1`**, **`cmake -S lib/Zelda64Recomp -B build-engine`**, or **repo-root** **`CMakeLists.txt`** + **`CMakePresets.json`** (**`engine-superbuild-*`** presets — **`ExternalProject_Add`**, see **`Docs/Workflow.md`**). Prep: **`lib/README.txt`**, **`tools/README.txt`** § Phase 6, **`lib/Zelda64Recomp/BUILDING.md`** (MM until an AFA fork).

@@ -254,6 +254,7 @@ Phase **4** is **closed at smoke level** when: **`make strict-verify`** is docum
 | **Windows prep (all of the above)** | **`tools/phase6_setup_windows.ps1`** — runs **`phase6_link_recompiledfuncs.ps1`**, **`phase6_copy_n64recomp_to_engine.ps1`**, then **`python`/`python3 tools/verify_phase6_layout.py`**. |
 | Verify bridge | **`make verify-phase6-layout`** — **`python3 tools/verify_phase6_layout.py`** (fails if both **`RecompiledFuncs`** paths exist but are not the same directory; skips if submodule missing). Part of **`make check`**. |
 | Configure / build | Root **`tools/phase6_engine_cmake.ps1`** — runs **`cmake -S lib/Zelda64Recomp -B build-engine …`** (upstream **`CMakeLists.txt`** expects that tree as **`CMAKE_SOURCE_DIR`**; see **`lib/README.txt`**). Or run the same **`cmake`** lines manually. Follow **`lib/Zelda64Recomp/BUILDING.md`** for MM ROM / toolchain prerequisites until an AFA fork exists. |
+| **Repo-root CMake (alternative)** | **`CMakeLists.txt`** at repo root uses **`ExternalProject_Add`** (**`zelda64recomp_engine`**) so the **inner** configure uses **`SOURCE_DIR = lib/Zelda64Recomp`** (same **`CMAKE_SOURCE_DIR`** invariant as direct **`-S lib/Zelda64Recomp`**). Outer binary dirs: **`build-root/`** (Ninja) or **`build-root-vs2022/`** (VS). **`CMakePresets.json`**: **`engine-superbuild-ninja-release`**, **`engine-superbuild-vs2022-release`**. Example: **`cmake --preset engine-superbuild-ninja-release`** then **`cmake --build --preset engine-superbuild-ninja-release`**. Default **`ALL`** also builds **`zelda64recomp_engine`** via **`aero_phase6_engine_default`**. |
 | Game layer | Empty tree for now — read **`src/README.txt`** and **`patches/README.txt`** |
 | Debug | **`Docs/Debugging.md`** — Visual Studio against the engine-generated **Windows PE** once CMake exists |
 
@@ -261,8 +262,9 @@ Phase **4** is **closed at smoke level** when: **`make strict-verify`** is docum
 
 - [x] **`lib/Zelda64Recomp`** present as submodule (**`dev`**); **`git submodule update --init --recursive`** documented in **`lib/README.txt`**. **Pin:** **`ab677e76615e5e47b3b26c822ca426485752ac77`** (**2026-05-13**).
 - [x] **Windows one-shot prep** — **`tools/phase6_setup_windows.ps1`** chains junction + PE copy + **`verify_phase6_layout.py`** (documented in **`Docs/Workflow.md`** Phase 6 table).
-- [ ] In-tree or fork **CMake** that builds **Aero Fighters Assault** + links this repo’s **`RecompiledFuncs/`** output (regenerated locally; not committed except **`README.txt`** / **`.gitkeep`**).
-- [ ] First **PowerShell** / **VS** run of the **AFA** game binary (even if it exits early) — capture breakpoints and logging notes in **`Docs/Debugging.md`**.
+- [x] **Repo-root CMake superbuild** — **`CMakeLists.txt`** + **`CMakePresets.json`**: **`ExternalProject_Add(zelda64recomp_engine)`** with inner **`SOURCE_DIR`** **`lib/Zelda64Recomp`** and **`BINARY_DIR`** **`build-engine/`** (preserves upstream **`CMAKE_SOURCE_DIR`**; see **`lib/README.txt`**).
+- [ ] **AFA fork** — replace MM **`us.rev1.toml`**, **`src/game/`**, RSP **`rsp/*.cpp`**, engine **`patches/`** / **`RecompiledPatches/`**, assets, and related glue so the shipped binary is **Aero Fighters Assault**, not stock **`Zelda64Recompiled`** (**`Docs/Workflow.md`** fork touchpoints table).
+- [ ] First **PowerShell** / **VS** run of the **AFA** game binary (even if it exits early) — capture breakpoints and logging notes in **`Docs/Debugging.md`**. *(Interim: after full **`BUILDING.md`**, the same **`build-engine/Zelda64Recompiled.exe`** path is the stock **MM** engine for bring-up.)*
 
 ### Phase 6 fork touchpoints (upstream `lib/Zelda64Recomp`)
 

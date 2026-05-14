@@ -1,0 +1,42 @@
+# AeroAssault64 — repo-root CMake entry for Phase 6 (engine superbuild).
+#
+# Upstream lib/Zelda64Recomp/CMakeLists.txt uses ${CMAKE_SOURCE_DIR} for lib/rt64,
+# RecompiledFuncs/, patches/, etc. add_subdirectory() from this repo would break those paths.
+# ExternalProject runs CMake with SOURCE_DIR = lib/Zelda64Recomp, preserving CMAKE_SOURCE_DIR.
+#
+# Prereqs: git submodule update --init --recursive; tools/phase6_setup_windows.ps1 (or junction +
+# copy PEs); full MM build still needs lib/Zelda64Recomp/BUILDING.md (ROM, RSP, patches pipeline).
+cmake_minimum_required(VERSION 3.20)
+project(AeroAssault64_engine_superbuild LANGUAGES C)
+
+if(NOT EXISTS "${CMAKE_SOURCE_DIR}/lib/Zelda64Recomp/CMakeLists.txt")
+  message(FATAL_ERROR
+    "Missing lib/Zelda64Recomp (Zelda64Recomp submodule). From repo root run:\n"
+    "  git submodule update --init --recursive\n"
+    "See lib/README.txt and Docs/Workflow.md § Phase 6.")
+endif()
+
+# CMake requires at least one target for some generators; this file is not linked to the engine.
+set(_AERO_DUMMY "${CMAKE_CURRENT_BINARY_DIR}/_aero_superbuild_dummy.c")
+file(WRITE "${_AERO_DUMMY}" "/* Empty translation unit — superbuild metadata only. */\n")
+add_library(_aero_superbuild_placeholder STATIC "${_AERO_DUMMY}")
+
+include(ExternalProject)
+
+set(_AFA_ENGINE_SRC "${CMAKE_SOURCE_DIR}/lib/Zelda64Recomp")
+set(_AFA_ENGINE_BIN "${CMAKE_SOURCE_DIR}/build-engine")
+
+set(_EP_CMAKE_ARGS "")
+if(CMAKE_BUILD_TYPE)
+  list(APPEND _EP_CMAKE_ARGS "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}")
+endif()
+
+ExternalProject_Add(
+  zelda64recomp_engine
+  SOURCE_DIR "${_AFA_ENGINE_SRC}"
+  BINARY_DIR "${_AFA_ENGINE_BIN}"
+  CMAKE_ARGS ${_EP_CMAKE_ARGS}
+  INSTALL_COMMAND ""
+)
+
+add_custom_target(aero_phase6_engine_default ALL DEPENDS zelda64recomp_engine)

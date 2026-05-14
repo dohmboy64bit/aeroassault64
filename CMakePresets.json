@@ -1,0 +1,40 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "engine-superbuild-ninja-release",
+      "displayName": "AeroAssault64 root: ExternalProject -> Zelda64Recomp (Ninja Release)",
+      "description": "Inner SOURCE_DIR is lib/Zelda64Recomp (preserves upstream CMAKE_SOURCE_DIR). Inner BINARY_DIR: build-engine/.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-root",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "engine-superbuild-vs2022-release",
+      "displayName": "AeroAssault64 root: ExternalProject -> Zelda64Recomp (VS 2022 x64)",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build-root-vs2022"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "engine-superbuild-ninja-release",
+      "configurePreset": "engine-superbuild-ninja-release",
+      "targets": ["zelda64recomp_engine"]
+    },
+    {
+      "name": "engine-superbuild-vs2022-release",
+      "configurePreset": "engine-superbuild-vs2022-release",
+      "configuration": "Release",
+      "targets": ["zelda64recomp_engine"]
+    }
+  ]
+}

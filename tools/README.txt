@@ -61,6 +61,13 @@ Convenience (runs junction + copy + **`python tools/verify_phase6_layout.py`**):
 
   .\tools\phase6_setup_windows.ps1
 
+**Repo-root CMake (optional):** **`CMakeLists.txt`** uses **`ExternalProject_Add(zelda64recomp_engine)`** so the inner project keeps **`lib/Zelda64Recomp`** as **`CMAKE_SOURCE_DIR`** (same reason direct **`cmake -S lib/Zelda64Recomp`** is used elsewhere). Presets (**`CMakePresets.json`** schema v3 — [cmake-presets(7)](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html)):
+
+  cmake --preset engine-superbuild-ninja-release
+  cmake --build --preset engine-superbuild-ninja-release
+
+Visual Studio: open the **AeroAssault64** repo folder, pick preset **`engine-superbuild-vs2022-release`**, then build target **`zelda64recomp_engine`**. Outer dirs **`build-root/`**, **`build-root-vs2022/`**; inner **`build-engine/`** (see **`.gitignore`**).
+
 **RecompiledFuncs path:** upstream CMake globs only under **`lib/Zelda64Recomp/RecompiledFuncs/`**; this repo’s TOML emits to **repo-root** **`RecompiledFuncs/`**. Run once after clone:
 
   .\tools\phase6_link_recompiledfuncs.ps1
