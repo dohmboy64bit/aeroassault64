@@ -1,4 +1,5 @@
 # MSVC configure + compile selected engine targets (no ROM; stub RecompiledFuncs when generated .c are absent).
+# Patches/RSP: materialize + configure with -AfaProduct (same stub path as -NoMmRom; exercises AEROASSAULT64_AFA_PRODUCT in CI).
 # Full Zelda64Recompiled.exe needs local N64Recomp output under RecompiledFuncs/ (gitignored); see Docs/Workflow.md Phase 5–6.
 name: engine-windows
 
@@ -30,9 +31,9 @@ jobs:
         shell: pwsh
         run: .\tools\phase6_link_recompiledfuncs.ps1
 
-      - name: Configure engine (Visual Studio 2022, no-MM)
+      - name: Configure engine (Visual Studio 2022, AFA product stubs)
         shell: pwsh
-        run: .\tools\phase6_engine_cmake_vs2022.ps1 -Mode Configure -NoMmRom
+        run: .\tools\phase6_engine_cmake_vs2022.ps1 -Mode Configure -AfaProduct
 
       - name: Build RecompiledFuncs and PatchesLib (Release)
         shell: pwsh

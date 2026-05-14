@@ -64,8 +64,9 @@ Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`**
 **Visual Studio 2022 (MSVC) — recommended for full `Zelda64Recompiled.exe` link:** **`tools/phase6_engine_cmake_vs2022.ps1`** uses **`build-engine-vs2022/`** (do not mix with Ninja’s **`build-engine/`**). Same **`Mode`** / **`-NoMmRom`** / **`-AfaProduct`** pattern; optional **`-CiStub`** matches **`tools/phase6_ci_ensure_recompiledfuncs_stub.ps1`** when **`RecompiledFuncs/`** has no generated **`.c`** (see **`.github/workflows/engine-windows.yml`**). Build uses **`--config Release`** by default (override with **`-Configuration`**). Example:
 
   .\tools\phase6_engine_cmake_vs2022.ps1 -Mode All -NoMmRom
+  .\tools\phase6_engine_cmake_vs2022.ps1 -Mode All -AfaProduct
 
-**Smoke launch (cwd = engine root, matches `VS_DEBUGGER_WORKING_DIRECTORY`):** **`.\tools\phase6_smoke_engine.ps1`** (optional **`-Seconds`**, **`-Configuration`**, **`-BuildDir`**). With **`-NoMmRom`**, CMake uses **RSP stubs** unless both **`lib/Zelda64Recomp/rsp/aspMain.cpp`** and **`rsp/njpgdspMain.cpp`** exist (**`BUILDING.md`** §4 — RSPRecomp after MM TOMLs / your forked pipeline).
+**Smoke launch (cwd = engine root, matches `VS_DEBUGGER_WORKING_DIRECTORY`):** **`.\tools\phase6_smoke_engine.ps1`** (optional **`-Seconds`**, **`-Configuration`**, **`-BuildDir`**). With **`-NoMmRom`** or **`-AfaProduct`**, CMake uses **RSP stubs** unless both **`lib/Zelda64Recomp/rsp/aspMain.cpp`** and **`rsp/njpgdspMain.cpp`** exist (**`BUILDING.md`** §4 — RSPRecomp after MM TOMLs / your forked pipeline).
 
 **CI / clean clone (no generated `RecompiledFuncs/*.c`):** **`.\tools\phase6_ci_ensure_recompiledfuncs_stub.ps1`** — writes a one-file stub only when the directory has no **`.c`** sources so **`lib/Zelda64Recomp/CMakeLists.txt`** `add_library(RecompiledFuncs …)` is legal. A full **`Zelda64Recompiled.exe`** link still requires real N64Recomp output locally (see **`config/aerofighters_assault.n64recomp.toml`**).
 
@@ -86,12 +87,15 @@ No-MM preset (forwards **`AEROASSAULT64_NO_MM_ROM`** to the engine; materialize 
   cmake --preset engine-superbuild-ninja-release-no-mm
   cmake --build --preset engine-superbuild-ninja-release-no-mm
 
-AFA-product preset (forwards **`AEROASSAULT64_AFA_PRODUCT`**; same materialize step as no-MM):
+AFA-product presets (forward **`AEROASSAULT64_AFA_PRODUCT`**; same materialize step as no-MM):
 
   cmake --preset engine-superbuild-ninja-release-afa-product
   cmake --build --preset engine-superbuild-ninja-release-afa-product
 
-Visual Studio: open the **AeroAssault64** repo folder, pick preset **`engine-superbuild-vs2022-release`**, then build target **`zelda64recomp_engine`**. Outer dirs **`build-root/`**, **`build-root-vs2022/`**; inner **`build-engine/`** (see **`.gitignore`**).
+  cmake --preset engine-superbuild-vs2022-release-afa-product
+  cmake --build --preset engine-superbuild-vs2022-release-afa-product
+
+Visual Studio: open the **AeroAssault64** repo folder, pick preset **`engine-superbuild-vs2022-release`** or **`engine-superbuild-vs2022-release-afa-product`**, then build target **`zelda64recomp_engine`**. Outer dirs **`build-root/`**, **`build-root-vs2022/`**, **`build-root-afa-product/`**, **`build-root-vs2022-afa-product/`**; inner **`build-engine/`** (see **`.gitignore`**).
 
 **RecompiledFuncs path:** upstream CMake globs only under **`lib/Zelda64Recomp/RecompiledFuncs/`**; this repo’s TOML emits to **repo-root** **`RecompiledFuncs/`**. Run once after clone:
 
