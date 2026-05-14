@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # Ghidra (PyGhidra): scan **`.ram`** code for **`lw` / `sw` / …** whose **effective address** matches
-# **`BASE_VRAM + offset`** when the **base register** is known from a **local constant** model
-# (**`lui`**, **`addiu`/`addi`**, **`ori`**, **`or reg,reg,zero`**, **`li`**).
+# **`BASE_VRAM + offset`** when the memory **base register** is known from a **local constant** model
+# (**`lui`**, **`addiu`/`addi`**, **`ori`**, **`or reg,reg,zero`**, **`li`**, plus optional **`jal`** → **`v0`**
+# from **`JAL_KNOWN_V0_BY_CALLEE_ENTRY`** when return value is built in the callee, not the caller).
 #
 # Automates “find **`sw`** writers / **`lw`** readers of **`0x802839B8`**” when **`getReferencesTo`**
 # only shows **FLOW** edges (**`RSP_RAM_Context_Field_Xrefs.py`**). **Branches / calls** make the
@@ -30,8 +31,13 @@ MEM_OFFSETS = (0, 0x8, 0xC)
 # Stop after this many hits (raise if truncated).
 MAX_HITS = 400
 
-# If True, reset the constant map at each function entry; single linear pass per function body.
-RESET_KNOWN_PER_FUNCTION = True
+# If non-empty: when **`jal`** resolves to callee **entry** key (VRAM int), set **`v0`** to the
+# value after the call (synthesized return). Use when writers do **`or s2,v0,zero`** after
+# **`jal FUN_8023d820`** — static **`lui`/`addiu`** for **`v0`** is inside the callee, not the caller.
+# AFA USA: **`RSP_Function_Return_Reg_Slice`** on **`0x8023D820`** → **`v0 = 0x802839B0`**.
+JAL_KNOWN_V0_BY_CALLEE_ENTRY = {
+    0x8023D820: 0x802839B0,
+}
 
 
 def get_block_exact(mem, name):
@@ -51,7 +57,8 @@ def memory_block_as_address_set(block):
 
 
 def _norm_dis(ins):
-    return re.sub(r"\s+", " ", ins.toString().lower().replace("_", " ")).strip()
+    s = re.sub(r"\s+", " ", ins.toString().lower().replace("_", " ")).strip()
+    return s.replace("$", "")
 
 
 def _parse_imm16(tok):
@@ -122,7 +129,35 @@ _OR_COPY_RE = re.compile(r"^(?:or|addu)\s+(\w+)\s*,\s*(\w+)\s*,\s*(zero|r0)\s*$"
 _LI_RE = re.compile(r"^li\s+(\w+)\s*,\s*(-?0x[0-9a-f]+|-?\d+)\s*$")
 
 
-def _apply_constant_semantics(ins, known):
+def _iter_references_from(ref_mgr, addr):
+    refs = ref_mgr.getReferencesFrom(addr)
+    if refs is None:
+        return
+    if hasattr(refs, "hasNext") and callable(getattr(refs, "hasNext", None)):
+        while refs.hasNext():
+            yield refs.next()
+        return
+    try:
+        for ref in refs:
+            yield ref
+    except TypeError:
+        pass
+
+
+def _jal_callee_entry_vram(ins, ref_mgr, fm):
+    for ref in _iter_references_from(ref_mgr, ins.getAddress()):
+        if not ref.getReferenceType().isCall():
+            continue
+        to_a = ref.getToAddress()
+        if to_a is None:
+            continue
+        fn = fm.getFunctionAt(to_a)
+        if fn is not None:
+            return int(fn.getEntryPoint().getOffset())
+    return None
+
+
+def _apply_constant_semantics(ins, known, ref_mgr, fm):
     """Update `known` from this insn if pattern matches; else invalidate written GPRs."""
     s = _norm_dis(ins)
     mn = ins.getMnemonicString().lower()
@@ -131,6 +166,12 @@ def _apply_constant_semantics(ins, known):
         for r in list(known.keys()):
             if r in _JAL_CLOBBERS:
                 known.pop(r, None)
+        if ref_mgr is not None and fm is not None and JAL_KNOWN_V0_BY_CALLEE_ENTRY:
+            ent = _jal_callee_entry_vram(ins, ref_mgr, fm)
+            if ent is not None:
+                v0v = JAL_KNOWN_V0_BY_CALLEE_ENTRY.get(ent)
+                if v0v is not None:
+                    known["v0"] = int(v0v) & 0xFFFFFFFF
         return
 
     m = _LUI_RE.match(s)
@@ -217,8 +258,7 @@ def _check_memop(ins, known, want_addrs, hits, fn, max_hits):
 def main():
     prog = currentProgram  # noqa: F821
     mem = prog.getMemory()
-    listing = prog.getListing()
-    fm = prog.getFunctionManager()
+    ref_mgr = prog.getReferenceManager()
 
     ram = get_block_exact(mem, ".ram")
     if ram is None:
@@ -231,7 +271,7 @@ def main():
     print("=== RSP_RAM_Constant_Base_Memops (AeroAssault64) ===")
     print("Program: %s" % prog.getName())
     print("Want effective addresses: %s" % ", ".join("0x%08X" % a for a in sorted(want)))
-    print("(lui/addiu/ori/or-copy/li model; invalidated on other defs; jal clears volatiles.)")
+    print("(lui/addiu/ori/or-copy/li; jal clears volatiles; optional JAL_KNOWN_V0_BY_CALLEE_ENTRY.)")
     print("")
 
     ram_set = memory_block_as_address_set(ram)
@@ -252,7 +292,7 @@ def main():
         _check_memop(ins, known, want, hits, fn, MAX_HITS)
         if len(hits) >= MAX_HITS:
             break
-        _apply_constant_semantics(ins, known)
+        _apply_constant_semantics(ins, known, ref_mgr, fm)
 
     hits.sort(key=lambda t: t[0])
     print("Hits: %d%s" % (len(hits), (" (MAX_HITS — raise tunable)" if len(hits) >= MAX_HITS else "")))
@@ -261,7 +301,8 @@ def main():
         print("      %s" % dis)
 
     if not hits:
-        print("(none — try Listing search, emulator RAM, or widen patterns in script.)")
+        print("(none — widen patterns, add callee entries to JAL_KNOWN_V0_BY_CALLEE_ENTRY,")
+        print("      Listing search, or emulator RAM.)")
 
     print("")
     print("Docs: lib/Zelda64Recomp/AFA_PORT.md §1; pair: tools/ghidra/RSP_RAM_Context_Field_Xrefs.py")
