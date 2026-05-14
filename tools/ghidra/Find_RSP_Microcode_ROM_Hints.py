@@ -22,7 +22,8 @@
 # tools/ghidra/RSP_Jal_Call_Sites_Disasm_From_Caller.py (disasm before each `jal` from a caller);
 # tools/ghidra/RSP_Jal_Arg_Register_Slice.py (heuristic last-def of a0-a3 + lw bases at selected jal);
 # tools/ghidra/RSP_Function_Return_Reg_Slice.py (v0/v1 last-def before each jr ra in a callee — e.g. after jal hint);
-# tools/ghidra/RSP_RAM_Context_Field_Xrefs.py (incoming xrefs + BE words at RAM base+offsets, .rom pointer hint).
+# tools/ghidra/RSP_RAM_Context_Field_Xrefs.py (incoming xrefs + BE words at RAM base+offsets, .rom pointer hint);
+# tools/ghidra/RSP_RAM_Constant_Base_Memops.py (scan lw/sw when base reg == BASE from lui/addiu in-function)).
 #
 #@runtime PyGhidra
 #@category AeroAssault64

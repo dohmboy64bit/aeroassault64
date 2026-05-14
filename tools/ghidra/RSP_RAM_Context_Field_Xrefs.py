@@ -272,6 +272,9 @@ def main():
         print("      to this base (e.g. xref from FUN_80283824) or use emulator RAM.")
         print("      Incoming kind=FLOW = control-flow to this address (e.g. `beq` label), not a load")
         print("      of the stored word. Outgoing kind=FLOW = jump from bytes at this VA (code/data mix).")
+        print("")
+        print("Next: tools/ghidra/RSP_RAM_Constant_Base_Memops.py — scan lw/sw for EA == BASE+offset")
+        print("      when base reg is built from lui/addiu/ori in the same function (runtime writers).")
 
 
 main()
