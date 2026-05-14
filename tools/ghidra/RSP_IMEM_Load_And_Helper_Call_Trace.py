@@ -163,23 +163,45 @@ def _in_sp_window(u32):
     return SP_PHYS_LO <= u32 < SP_PHYS_HI
 
 
+def _instructions_backward(listing, ins, n_before, min_addr=None):
+    """Instructions strictly before `ins`, oldest-first. See RSP_Jal_Call_Sites_Disasm_From_Caller."""
+    out = []
+    cur = ins
+    for _ in range(n_before):
+        prev = None
+        if cur is not None:
+            try:
+                if hasattr(cur, "getPrevious"):
+                    prev = cur.getPrevious()
+            except Exception:
+                prev = None
+        if prev is None and cur is not None:
+            try:
+                prev = listing.getInstructionBefore(cur.getAddress())
+            except Exception:
+                prev = None
+        if prev is None:
+            break
+        if min_addr is not None and prev.getAddress().compareTo(min_addr) < 0:
+            break
+        out.insert(0, prev)
+        cur = prev
+    return out
+
+
 def _print_insn_window(listing, fm, from_addr, n_before):
     ins = listing.getInstructionContaining(from_addr)
     if ins is None:
         print("      (no Instruction at xref %s)" % from_addr)
         return
-    chain = []
-    cur = ins
-    for _ in range(n_before):
-        try:
-            prev = listing.getInstructionBefore(cur)
-        except Exception:
-            prev = None
-        if prev is None:
-            break
-        chain.append(prev)
-        cur = prev
-    chain.reverse()
+    min_addr = None
+    try:
+        f = fm.getFunctionContaining(from_addr)
+        if f is not None:
+            min_addr = f.getBody().getMinAddress()
+    except Exception:
+        pass
+    chain = _instructions_backward(listing, ins, n_before, min_addr)
     for x in chain:
         try:
             fn = fm.getFunctionContaining(x.getAddress())

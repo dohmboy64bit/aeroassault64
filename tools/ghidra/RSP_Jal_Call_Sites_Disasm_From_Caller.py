@@ -4,6 +4,8 @@
 #
 # Automates re-running RSP_IMEM_Load_And_Helper_Call_Trace.py with every HELPER_ENTRY_VRAM: one
 # script walks the caller body only (not all xrefs in the binary). Same `.ram` as Phase2_Closeout.
+# Backward disasm: use getInstructionBefore(Address) or Instruction.getPrevious — not
+# getInstructionBefore(Instruction) (empty window in PyGhidra).
 #
 # Docs: lib/Zelda64Recomp/AFA_PORT.md section 1.
 #
@@ -66,23 +68,42 @@ def _iter_references_from(ref_mgr, addr):
         pass
 
 
-def _print_window_before_jal(listing, fm, jal_addr, n_before):
+def _instructions_backward(listing, ins, n_before, min_addr=None):
+    """
+    Return up to n_before instructions strictly before `ins`, oldest-first.
+    Ghidra Listing.getInstructionBefore(Address) needs an Address, not an Instruction object.
+    Prefer Instruction.getPrevious() when the listing links it.
+    """
+    out = []
+    cur = ins
+    for _ in range(n_before):
+        prev = None
+        if cur is not None:
+            try:
+                if hasattr(cur, "getPrevious"):
+                    prev = cur.getPrevious()
+            except Exception:
+                prev = None
+        if prev is None and cur is not None:
+            try:
+                prev = listing.getInstructionBefore(cur.getAddress())
+            except Exception:
+                prev = None
+        if prev is None:
+            break
+        if min_addr is not None and prev.getAddress().compareTo(min_addr) < 0:
+            break
+        out.insert(0, prev)
+        cur = prev
+    return out
+
+
+def _print_window_before_jal(listing, fm, jal_addr, n_before, min_body_addr=None):
     ins = listing.getInstructionContaining(jal_addr)
     if ins is None:
         print("      (no Instruction at %s)" % jal_addr)
         return
-    chain = []
-    cur = ins
-    for _ in range(n_before):
-        try:
-            prev = listing.getInstructionBefore(cur)
-        except Exception:
-            prev = None
-        if prev is None:
-            break
-        chain.append(prev)
-        cur = prev
-    chain.reverse()
+    chain = _instructions_backward(listing, ins, n_before, min_body_addr)
     for x in chain:
         try:
             fn = fm.getFunctionContaining(x.getAddress())
@@ -175,7 +196,13 @@ def main():
             callee = fm.getFunctionAt(to_a)
             if callee is None:
                 print("--- jal @ %s -> (no Function) %s ---" % (ins.getAddress(), to_a))
-                _print_window_before_jal(listing, fm, ins.getAddress(), INSN_WINDOW_BEFORE)
+                _print_window_before_jal(
+                    listing,
+                    fm,
+                    ins.getAddress(),
+                    INSN_WINDOW_BEFORE,
+                    fn.getBody().getMinAddress(),
+                )
                 print("")
                 n += 1
                 break
@@ -187,7 +214,13 @@ def main():
                 "--- jal @ %s  ->  %s @ %s ---"
                 % (ins.getAddress(), cname, cent)
             )
-            _print_window_before_jal(listing, fm, ins.getAddress(), INSN_WINDOW_BEFORE)
+            _print_window_before_jal(
+                listing,
+                fm,
+                ins.getAddress(),
+                INSN_WINDOW_BEFORE,
+                fn.getBody().getMinAddress(),
+            )
             print("")
             n += 1
             break
