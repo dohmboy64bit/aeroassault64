@@ -6,7 +6,10 @@
 # Typical workflow: copy this file to lib/Zelda64Recomp/aspMain.afa.us.toml, set rom_file_path to your
 # byteswapped USA z64 next to the engine root, run from engine root:
 #   ./RSPRecomp.exe aspMain.afa.us.toml
-# Output: lib/Zelda64Recomp/rsp/aspMain.cpp (see lib/Zelda64Recomp/BUILDING.md section 4).
+# Output: lib/Zelda64Recomp/rsp/aspMain.cpp (see upstream BUILDING.md section 4 when present in the engine tree).
+#
+# extra_indirect_branch_targets: MM lists many word offsets (see upstream aspMain.us.rev1.toml URL above).
+# AFA may need its own list from microcode analysis / RSPRecomp guidance — start with [] only if RSPRecomp accepts it.
 
 text_offset = 0x0
 text_size = 0x0

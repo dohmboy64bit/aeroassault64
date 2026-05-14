@@ -2,6 +2,9 @@
 # DO NOT run until text_offset / text_size / text_address are filled from ROM analysis.
 # Schema matches upstream MM file:
 #   https://raw.githubusercontent.com/Mr-Wiseguy/Zelda64Recomp/master/njpgdspMain.us.rev1.toml
+#
+# Typical workflow: copy to lib/Zelda64Recomp/njpgdspMain.afa.us.toml; run ./RSPRecomp.exe njpgdspMain.afa.us.toml
+# from engine root; output rsp/njpgdspMain.cpp. Or: pwsh ../../tools/phase6_rsprecomp_afa.ps1 from repo root.
 
 text_offset = 0x0
 text_size = 0x0

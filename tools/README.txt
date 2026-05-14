@@ -121,6 +121,8 @@ Optional: **`-WhatIf`** lists destinations only. Same binaries as Phase 5 (**`to
 
 **RSP C++ (Majora's Mask, BUILDING.md §4):** after **`mm.us.rev1.rom_uncompressed.z64`** is in **`lib/Zelda64Recomp/`** (§3), run **`.\tools\phase6_rsprecomp_engine.ps1`** — invokes **`RSPRecomp.exe`** on **`aspMain.us.rev1.toml`** and **`njpgdspMain.us.rev1.toml`**, producing **`lib/Zelda64Recomp/rsp/aspMain.cpp`** and **`njpgdspMain.cpp`** (gitignored upstream). Optional **`-CopyTools`** runs **`phase6_copy_n64recomp_to_engine.ps1`** first; **`-WhatIf`** prints intent only.
 
+**RSP C++ (AFA USA, `AFA_PORT.md` §1):** copy filled **`config/afa_rsp/*.template.toml`** to **`lib/Zelda64Recomp/aspMain.afa.us.toml`** and **`njpgdspMain.afa.us.toml`**, place ROM (**`afa.n64.us.z64`** by default next to TOMLs), then **`.\tools\phase6_rsprecomp_afa.ps1`** (optional **`-RomPath`**, **`-CopyTools`**, **`-WhatIf`**; **`-SkipOffsetGuard`** only if you are not using **`0x0`** placeholders). Makefile: **`make phase6-rsprecomp-afa`**. CMake links these outputs whenever both **`rsp/*.cpp`** exist — see **`lib/Zelda64Recomp/CMakeLists.txt`** **`_AERO_PATCH_RSP_STUBS`** branch and **`config/afa_rsp/README.txt`**.
+
 Optional: **`make phase6-mm-prereq`** (**`python3 tools/phase6_mm_engine_prereq_check.py`**) — lists missing **Majora's Mask** engine files per **`lib/Zelda64Recomp/BUILDING.md`** (ROM, generated **`rsp/*.cpp`**, **`RecompiledPatches/`**). Append **`--strict`** to exit non-zero if anything required is missing. Not run by **`make check`**.
 
 Follow **`lib/Zelda64Recomp/BUILDING.md`** for ROM extraction, nested submodules, and RT64 prerequisites before expecting configure to succeed.

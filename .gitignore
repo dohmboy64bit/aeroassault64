@@ -21,6 +21,8 @@ build-root-vs2022-afa-product/
 build-root-vs2022-afa-product-retail/
 build-engine/
 build-engine-vs2022/
+# RSPRecomp output under engine (see lib/Zelda64Recomp/AFA_PORT.md section 1; upstream convention).
+lib/Zelda64Recomp/rsp/*.cpp
 out/
 cmake-build-*/
 CMakeFiles/

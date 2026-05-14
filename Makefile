@@ -2,7 +2,7 @@
 # Prerequisite: from repo root run `python3 -m splat split config/splat.yaml` so asm/, assets/ipl3.bin, and build/*.ld exist.
 # See Docs/Workflow.md and https://github.com/ethteck/splat/wiki/General-Workflow
 
-.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync verify-entrypoint-sync verify-phase6-layout phase6-mm-prereq phase6-n64recomp-mm phase6-rsprecomp phase6-materialize-stubs phase5-aero-n64recomp-win check help
+.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync verify-entrypoint-sync verify-phase6-layout phase6-mm-prereq phase6-n64recomp-mm phase6-rsprecomp phase6-rsprecomp-afa phase6-materialize-stubs phase5-aero-n64recomp-win check help
 
 .DEFAULT_GOAL := all
 
@@ -22,6 +22,7 @@ help:
 	@echo "  make phase6-n64recomp-mm - Windows: pwsh tools/phase6_n64recomp_mm.ps1 (MM us.rev1.toml; needs ROM in engine root)"
 	@echo "  make phase5-aero-n64recomp-win - Windows: pwsh tools/phase5_run_aero_n64recomp.ps1 (AFA TOML; needs $(ELF), tools/N64Recomp.exe)"
 	@echo "  make phase6-rsprecomp - Windows: pwsh tools/phase6_rsprecomp_engine.ps1 (MM RSP outputs; needs ROM in engine root)"
+	@echo "  make phase6-rsprecomp-afa - Windows: pwsh tools/phase6_rsprecomp_afa.ps1 (AFA TOMLs at engine root; see config/afa_rsp/)"
 	@echo "  make clean          - remove $(ELF), objects, extern ld"
 	@echo "See Docs/Workflow.md and tools/README.txt."
 
@@ -132,6 +133,10 @@ phase5-aero-n64recomp-win:
 # Windows / PowerShell 7+: MM RSP outputs — run after phase6-n64recomp-mm when following BUILDING.md (section 3 ROM).
 phase6-rsprecomp:
 	pwsh -NoProfile -ExecutionPolicy Bypass -File tools/phase6_rsprecomp_engine.ps1
+
+# Windows / PowerShell 7+: AFA USA RSP outputs — filled aspMain.afa.us.toml + njpgdspMain.afa.us.toml in engine root (lib/Zelda64Recomp/AFA_PORT.md section 1).
+phase6-rsprecomp-afa:
+	pwsh -NoProfile -ExecutionPolicy Bypass -File tools/phase6_rsprecomp_afa.ps1
 
 check-split:
 	@test -f $(LDSCRIPT) || (echo "Missing $(LDSCRIPT). Run: $(SPLAT) split $(SPLIT_CFG)"; exit 1)
