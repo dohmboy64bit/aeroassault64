@@ -59,6 +59,12 @@ From repo root in **PowerShell** (requires **CMake** on `PATH`; default generato
 
 Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`** with **`cmake --build`** for that generator). Output directory: **`build-engine/`** (gitignored).
 
+**Visual Studio 2022 (MSVC) — recommended for full `Zelda64Recompiled.exe` link:** **`tools/phase6_engine_cmake_vs2022.ps1`** uses **`build-engine-vs2022/`** (do not mix with Ninja’s **`build-engine/`**). Same **`Mode`** / **`-NoMmRom`** pattern; build uses **`--config Release`** by default (override with **`-Configuration`**). Example:
+
+  .\tools\phase6_engine_cmake_vs2022.ps1 -Mode All -NoMmRom
+
+**Smoke launch (cwd = engine root, matches `VS_DEBUGGER_WORKING_DIRECTORY`):** **`.\tools\phase6_smoke_engine.ps1`** (optional **`-Seconds`**, **`-Configuration`**, **`-BuildDir`**). With **`-NoMmRom`**, CMake uses **RSP stubs** unless both **`lib/Zelda64Recomp/rsp/aspMain.cpp`** and **`rsp/njpgdspMain.cpp`** exist (**`BUILDING.md`** §4 — RSPRecomp after MM TOMLs / your forked pipeline).
+
 Convenience (runs junction + copy + **`python tools/verify_phase6_layout.py`**):
 
   .\tools\phase6_setup_windows.ps1
@@ -106,5 +112,7 @@ Optional context dump (supported in **`src/main.cpp`** for this tree): append **
 **Patches in `config/aerofighters_assault.n64recomp.toml`:** **`[[patches.instruction]]`** turns **`func_8024AE70`**’s **`j func_84001064`** into **`jr $ra` / `nop`** (see **`asm/4BE20.s`** — N64Recomp **`recompilation.cpp`** cannot follow that **`0x8400…`** branch). **`[patches]` `stubs`** skip bodies for handwritten COP0 / **`cache`** routines (**`asm/4BE20.s`**, **`asm/3E750.s`**, **`asm/3FFD0.s`**, **`asm/3DDC0.s`**, **`asm/49090.s`**) and for functions where **`src/analysis.cpp`** fails jump-table sizing (`Failed to determine size of jump table`).
 
 **Regenerate stub list after big `splat split` / ELF changes:** `python tools/n64recomp_stub_until_green.py` (appends **`func_*`** names to **`stubs`** until **`N64Recomp.exe`** exits **0**).
+
+**AFA USA ROM hash (optional second `GameEntry` in the engine):** **`lib/Zelda64Recomp`** validates ROMs with **XXH3-64** over the full file after byteswap normalize — same as **`lib/N64ModernRuntime/librecomp/src/recomp.cpp`** (**`check_hash` / `XXH3_64bits`**). Run **`pip install xxhash`** then **`python tools/compute_aero_rom_xxh3.py path/to/rom.z64`** (writes **`config/.afa_usa_rom_xxh3`**, gitignored — see **`config/.afa_usa_rom_xxh3.example`**). Re-configure CMake, or pass **`-DAEROASSAULT64_AFA_ROM_XXH3_HEX=...`** / **`tools/phase6_engine_cmake_vs2022.ps1 -AfaRomXxh3Hex ...`**.
 
 Generated C/C++ must land only under **`RecompiledFuncs/`** (see **`RecompiledFuncs/README.txt`**; large **`funcs_*.c`** / headers are **gitignored** — regenerate locally). Schema reference: N64Recomp **`src/config.cpp`** `[input]` keys; game-style examples live under **`Docs/RepoInjests/`** (e.g. Kirby **`NK4E.toml`** `[input]` block in **`kirby64ret-kirby64recomp-8a5edab282632443.txt`**).

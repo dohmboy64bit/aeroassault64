@@ -49,6 +49,9 @@ RecompiledFuncs/*.inl
 !RecompiledFuncs/README.txt
 !RecompiledFuncs/.gitkeep
 
+# AFA USA ROM XXH3 for optional second GameEntry (see tools/compute_aero_rom_xxh3.py, lib/Zelda64Recomp/CMakeLists.txt)
+config/.afa_usa_rom_xxh3
+
 # Generated asm (when splat emits into repo — adjust path if you use asm/ at root)
 asm/
 

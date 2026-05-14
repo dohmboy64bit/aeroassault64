@@ -24,6 +24,8 @@ output_func_path = "../RecompiledFuncs"
 [patches]
 
 stubs = [
+    # N64Recomp warns: branching outside of the function (to 0x8024EAFC) — stub until CFG is stable.
+    "func_8025A840",
     # `asm/4BE20.s` — `func_8024AE78`: handwritten COP0 / `jal` / `j` into `0x8400…`
     # bootstrap. N64Recomp `recompilation.cpp` skips body when `func.stubbed`
     # (`stubs` list in `src/main.cpp`); `analyze_function` hits "Unhandled cop0 register in mtc0: 0" otherwise.

@@ -1,0 +1,6 @@
+# Copy to `.afa_usa_rom_xxh3` (same directory) after running:
+#   pip install xxhash
+#   python tools/compute_aero_rom_xxh3.py path/to/AeroFightersAssault.z64
+#
+# File must contain exactly one line: 16 lowercase hex digits (no 0x).
+# Algorithm matches lib/Zelda64Recomp/lib/N64ModernRuntime/librecomp/src/recomp.cpp (XXH3_64bits).
