@@ -40,6 +40,10 @@ INCLUDE_BRANCH_DELAY_SLOT = True
 # If **`v0`/`v1`** have no in-window def, print last **`jal`** before **`jr ra`** (nested return).
 JAL_RETURN_REG_HINT = True
 
+# If False, **`v1`** with no def skips the “last jal” lines (that hint targets **`v0`** from nested
+# calls; **`v1`** is often unset for pointer-sized returns — verify **`long long`** paths in decompiler).
+JAL_RETURN_REG_HINT_FOR_V1 = False
+
 # Print this many oldest→newest disasm lines for context before each **`jr`** (0 = skip).
 DISASM_CONTEXT_LINES = 14
 
@@ -244,6 +248,12 @@ def _print_return_reg_line(reg, last_def, block, ref_mgr, fm, ret_ins):
         if ld == reg and base:
             bs = last_def.get(base)
             print("      (lw base %s <- %s)" % (base, _fmt_def(bs)))
+        return
+    if reg == "v1" and not JAL_RETURN_REG_HINT_FOR_V1:
+        print(
+            "  v1: (no def in window — often unused for pointer-sized `v0` return; "
+            "set JAL_RETURN_REG_HINT_FOR_V1 True for `long long` / pair returns)"
+        )
         return
     if (
         JAL_RETURN_REG_HINT
