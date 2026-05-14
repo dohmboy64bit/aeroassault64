@@ -31,6 +31,9 @@ MEM_OFFSETS = (0, 0x8, 0xC)
 # Stop after this many hits (raise if truncated).
 MAX_HITS = 400
 
+# If True, reset the constant map at each function entry (linear pass per function).
+RESET_KNOWN_PER_FUNCTION = True
+
 # If non-empty: when **`jal`** resolves to callee **entry** key (VRAM int), set **`v0`** to the
 # value after the call (synthesized return). Use when writers do **`or s2,v0,zero`** after
 # **`jal FUN_8023d820`** — static **`lui`/`addiu`** for **`v0`** is inside the callee, not the caller.
