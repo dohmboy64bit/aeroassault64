@@ -258,7 +258,9 @@ def _check_memop(ins, known, want_addrs, hits, fn, max_hits):
 def main():
     prog = currentProgram  # noqa: F821
     mem = prog.getMemory()
+    listing = prog.getListing()
     ref_mgr = prog.getReferenceManager()
+    fm = prog.getFunctionManager()
 
     ram = get_block_exact(mem, ".ram")
     if ram is None:
