@@ -3,6 +3,8 @@ Engine submodule (**tracked**)
 Upstream reference: https://github.com/Mr-Wiseguy/Zelda64Recomp  
 **Submodule remote (this repo, `.gitmodules`):** https://github.com/DohmBoy64Bit/Zelda64Recomp.git — **branch tracked:** `dev` (AeroAssault64 port commits). **Gitlink:** run `git rev-parse HEAD:lib/Zelda64Recomp` after pull. To merge upstream Mr-Wiseguy `dev`, add that repo as a second remote inside **`lib/Zelda64Recomp`** and merge/rebase as needed.
 
+**Pinned dependencies (fork mirrors):** **`lib/Zelda64Recomp/.gitmodules`** points **`lib/N64ModernRuntime`** and **`lib/rt64`** at **https://github.com/DohmBoy64Bit/N64ModernRuntime** and **https://github.com/DohmBoy64Bit/rt64** so the exact submodule commits used by this port are reachable on `git clone --recursive` (GitHub `upload-pack` requires SHAs to be on an advertised ref). RT64 is tagged **`aeroassault64-engine-pin`** on that fork for the same pin.
+
 After a fresh clone from repo root:
 
   git submodule update --init --recursive
