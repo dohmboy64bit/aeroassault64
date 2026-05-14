@@ -55,6 +55,12 @@ From repo root in **PowerShell** (requires **CMake** on `PATH`; default generato
 
 Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`** with **`cmake --build`** for that generator). Output directory: **`build-engine/`** (gitignored).
 
+**RecompiledFuncs path:** upstream CMake globs only under **`lib/Zelda64Recomp/RecompiledFuncs/`**; this repo’s TOML emits to **repo-root** **`RecompiledFuncs/`**. Run once after clone:
+
+  .\tools\phase6_link_recompiledfuncs.ps1
+
+(**`-Remove`** drops the junction.) Rationale: **`lib/Zelda64Recomp/CMakeLists.txt`** **`file(GLOB … ${CMAKE_SOURCE_DIR}/RecompiledFuncs/*.c)`**; **`config/aerofighters_assault.n64recomp.toml`** **`output_func_path`** — see **`lib/README.txt`**.
+
 Follow **`lib/Zelda64Recomp/BUILDING.md`** for ROM extraction, nested submodules, and RT64 prerequisites before expecting configure to succeed.
 
 ---

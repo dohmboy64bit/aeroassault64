@@ -18,6 +18,16 @@ Upstream **`lib/Zelda64Recomp/CMakeLists.txt`** uses **`CMAKE_SOURCE_DIR`** for 
   `cmake -S lib/Zelda64Recomp -B build-engine -G Ninja -DCMAKE_BUILD_TYPE=Release`  
   then **`cmake --build build-engine`** (after satisfying **BUILDING.md** prerequisites).
 
+### Bridge `RecompiledFuncs/` (interim, Windows)
+
+Upstream globs MIPS output only under **`${CMAKE_SOURCE_DIR}/RecompiledFuncs`** — see **`lib/Zelda64Recomp/CMakeLists.txt`** **`file(GLOB FUNC_C_SOURCES ${CMAKE_SOURCE_DIR}/RecompiledFuncs/*.c)`** (and **`*.cpp`**). This repo’s N64Recomp TOML writes to **repo-root** **`RecompiledFuncs/`** (**`config/aerofighters_assault.n64recomp.toml`** **`output_func_path = "../RecompiledFuncs"`** relative to **`config/`**, per N64Recomp **`src/config.cpp`** path rules in **`tools/README.txt`**).
+
+From repo root (PowerShell), once after clone (or whenever the junction is missing):
+
+  .\tools\phase6_link_recompiledfuncs.ps1
+
+Remove the junction: **`.\tools\phase6_link_recompiledfuncs.ps1 -Remove`**. This does **not** replace **BUILDING.md** steps (RSP **`rsp/*.cpp`**, **`RecompiledPatches/`**, MM **`patches/`** pipeline) — it only aligns **where** the engine CMake looks for **CPU** recomp C sources.
+
 One-time add (already done in this repo; for reference only):
 
   git submodule add -b dev https://github.com/Mr-Wiseguy/Zelda64Recomp.git lib/Zelda64Recomp
@@ -30,4 +40,4 @@ One-time add (already done in this repo; for reference only):
 - **Game TOML:** **`config/aerofighters_assault.n64recomp.toml`** — wire into the port template the engine provides (see Zelda64Recomp docs and **`Docs/RepoInjests/`** for TOML patterns).
 - **Glue / overrides:** **`src/README.txt`**, **`patches/README.txt`**, **`Docs/Workflow.md`** § Phase 6.
 
-Do not copy generated **`RecompiledFuncs/*.c`** into **`lib/`** — regenerate under **`RecompiledFuncs/`** only.
+Do not duplicate generated **`RecompiledFuncs/*.c`** into **`lib/`** as separate copies — regenerate under **repo-root** **`RecompiledFuncs/`** only, then use **`tools/phase6_link_recompiledfuncs.ps1`** (junction) or a fork that changes upstream globs.

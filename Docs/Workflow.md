@@ -249,6 +249,7 @@ Phase **4** is **closed at smoke level** when: **`make strict-verify`** is docum
 | Step | Notes |
 |------|--------|
 | Init engine | From repo root: **`git submodule update --init --recursive`** — pulls **`lib/Zelda64Recomp`** and nested deps (see **`.gitmodules`**, **`lib/README.txt`**). |
+| Bridge **RecompiledFuncs** | **`tools/phase6_link_recompiledfuncs.ps1`** — junction **`lib/Zelda64Recomp/RecompiledFuncs`** → repo-root **`RecompiledFuncs/`** so upstream **`CMakeLists.txt`** **`file(GLOB …/RecompiledFuncs/*.c)`** matches Phase 5 output paths (**`config/aerofighters_assault.n64recomp.toml`** **`output_func_path`**; N64Recomp **`src/config.cpp`**). **`-Remove`** to delete the junction. |
 | Configure / build | Root **`tools/phase6_engine_cmake.ps1`** — runs **`cmake -S lib/Zelda64Recomp -B build-engine …`** (upstream **`CMakeLists.txt`** expects that tree as **`CMAKE_SOURCE_DIR`**; see **`lib/README.txt`**). Or run the same **`cmake`** lines manually. Follow **`lib/Zelda64Recomp/BUILDING.md`** for MM ROM / toolchain prerequisites until an AFA fork exists. |
 | Game layer | Empty tree for now — read **`src/README.txt`** and **`patches/README.txt`** |
 | Debug | **`Docs/Debugging.md`** — Visual Studio against the engine-generated **Windows PE** once CMake exists |
@@ -256,7 +257,7 @@ Phase **4** is **closed at smoke level** when: **`make strict-verify`** is docum
 ### Phase 6 checklist
 
 - [x] **`lib/Zelda64Recomp`** present as submodule (**`dev`**); **`git submodule update --init --recursive`** documented in **`lib/README.txt`**. **Pin:** **`ab677e76615e5e47b3b26c822ca426485752ac77`** (**2026-05-13**).
-- [x] Root **CMake helper** that configures upstream from **`lib/Zelda64Recomp`** with **`binaryDir`** at repo root — **`tools/phase6_engine_cmake.ps1`** (does **not** yet wire **AFA** **`RecompiledFuncs/`** or TOML; that is fork / superproject work).
+- [x] Interim **`tools/phase6_link_recompiledfuncs.ps1`** — junction so **`lib/Zelda64Recomp/RecompiledFuncs`** matches repo-root **`RecompiledFuncs/`** (upstream **`file(GLOB ${CMAKE_SOURCE_DIR}/RecompiledFuncs/*.c)`** vs TOML **`output_func_path`** — **`lib/README.txt`**).
 - [ ] In-tree or fork **CMake** that builds **Aero Fighters Assault** + links this repo’s **`RecompiledFuncs/`** output (regenerated locally; not committed except **`README.txt`** / **`.gitkeep`**).
 - [ ] First **PowerShell** / **VS** run of the **AFA** game binary (even if it exits early) — capture breakpoints and logging notes in **`Docs/Debugging.md`**.
 

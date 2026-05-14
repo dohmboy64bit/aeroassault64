@@ -13,8 +13,13 @@
 
 ## Phase 6 — Windows PE (engine)
 
-- After **`lib/Zelda64Recomp`** (or chosen engine) is added, build per that repo’s **BUILDING.md** and open the generated **Visual Studio** solution or CMake preset for **Debug** / **RelWithDebInfo**.
-- Game-specific breakpoints and RT64 / recomp logging notes belong in this file as the port boots.
+- After **`lib/Zelda64Recomp`** is present (**`git submodule update --init --recursive`**), build per **`lib/Zelda64Recomp/BUILDING.md`** (Majora's Mask **decompressed** ROM, in-tree **N64Recomp** / **RSPRecomp** runs, then CMake). Use **`tools/phase6_engine_cmake.ps1`** from the **AeroAssault64** repo root for **`cmake -S lib/Zelda64Recomp -B build-engine`** (**`tools/README.txt`** § Phase 6).
+- **RecompiledFuncs path:** run **`tools/phase6_link_recompiledfuncs.ps1`** so upstream CMake globs see **repo-root** **`RecompiledFuncs/`** (see **`lib/README.txt`**). Without this, **`add_library(RecompiledFuncs STATIC)`** can fail with **no SOURCES** even after Phase 5 N64Recomp.
+- **Common configure failures (upstream tree):**
+  - **`Cannot find source file: .../rsp/aspMain.cpp`** — **`rsp/.gitignore`** lists generated **`aspMain.cpp`** / **`njpgdspMain.cpp`**. Generate them with **RSPRecomp** per **`lib/Zelda64Recomp/BUILDING.md`** § 4 (**`./RSPRecomp aspMain.us.rev1.toml`** etc., from the **engine** root with MM artifacts).
+  - **Missing `RecompiledPatches/patches.c`** — produced by the engine’s **`patches/`** + **`N64Recomp patches.toml`** pipeline (**`lib/Zelda64Recomp/CMakeLists.txt`** custom commands); not the same as AeroAssault64 **`patches/`** at repo root.
+- Open the generated solution or launch **`build-engine/`** output under **Visual Studio** for **Debug** / **RelWithDebInfo** once the executable exists.
+- **AFA-specific** breakpoints and RT64 / recomp logging notes belong here as the port boots on a **forked** engine, not stock MM.
 
 ## Reference material
 
