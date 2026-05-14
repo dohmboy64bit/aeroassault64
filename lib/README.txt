@@ -14,6 +14,7 @@ Then open **`lib/Zelda64Recomp/BUILDING.md`** for RT64, nested submodules, depen
 Upstream **`lib/Zelda64Recomp/CMakeLists.txt`** uses **`CMAKE_SOURCE_DIR`** for **`lib/rt64`**, **`RecompiledFuncs/`**, etc., so the engine must be configured with **that directory as the CMake source root** — not by `add_subdirectory` from the AeroAssault64 repo root unless the engine is refactored.
 
 - **Script (repo root, PowerShell):** **`tools/phase6_engine_cmake.ps1`** — **`cmake -S lib/Zelda64Recomp -B build-engine`** (default **Ninja** + **Release**); see **`tools/README.txt`** § Phase 6.
+- **Vendored recompilers (BUILDING.md § 4):** **`tools/phase6_copy_n64recomp_to_engine.ps1`** — copies **`tools/N64Recomp.exe`** and **`tools/RSPRecomp.exe`** into **`lib/Zelda64Recomp/`** (ignored by submodule **`*.gitignore`** **`*.exe`**).
 - **Manual (same layout):**  
   `cmake -S lib/Zelda64Recomp -B build-engine -G Ninja -DCMAKE_BUILD_TYPE=Release`  
   then **`cmake --build build-engine`** (after satisfying **BUILDING.md** prerequisites).

@@ -15,6 +15,8 @@
 
 - After **`lib/Zelda64Recomp`** is present (**`git submodule update --init --recursive`**), build per **`lib/Zelda64Recomp/BUILDING.md`** (Majora's Mask **decompressed** ROM, in-tree **N64Recomp** / **RSPRecomp** runs, then CMake). Use **`tools/phase6_engine_cmake.ps1`** from the **AeroAssault64** repo root for **`cmake -S lib/Zelda64Recomp -B build-engine`** (**`tools/README.txt`** § Phase 6).
 - **RecompiledFuncs path:** run **`tools/phase6_link_recompiledfuncs.ps1`** so upstream CMake globs see **repo-root** **`RecompiledFuncs/`** (see **`lib/README.txt`**). Without this, **`add_library(RecompiledFuncs STATIC)`** can fail with **no SOURCES** even after Phase 5 N64Recomp.
+
+**Vendored recompilers:** run **`tools/phase6_copy_n64recomp_to_engine.ps1`** so **`lib/Zelda64Recomp/`** contains **`N64Recomp.exe`** and **`RSPRecomp.exe`** where **`lib/Zelda64Recomp/BUILDING.md`** § 4 expects them (after submodule init). Same binaries as **`tools/README.txt`** Phase 5; engine **`.gitignore`** ignores **`*.exe`** there.
 - **Common configure failures (upstream tree):**
   - **`Cannot find source file: .../rsp/aspMain.cpp`** — **`rsp/.gitignore`** lists generated **`aspMain.cpp`** / **`njpgdspMain.cpp`**. Generate them with **RSPRecomp** per **`lib/Zelda64Recomp/BUILDING.md`** § 4 (**`./RSPRecomp aspMain.us.rev1.toml`** etc., from the **engine** root with MM artifacts).
   - **Missing `RecompiledPatches/patches.c`** — produced by the engine’s **`patches/`** + **`N64Recomp patches.toml`** pipeline (**`lib/Zelda64Recomp/CMakeLists.txt`** custom commands); not the same as AeroAssault64 **`patches/`** at repo root.

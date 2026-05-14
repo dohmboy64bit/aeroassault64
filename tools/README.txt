@@ -63,6 +63,12 @@ Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`**
 
 (**`-Remove`** drops the junction.) Rationale: **`lib/Zelda64Recomp/CMakeLists.txt`** **`file(GLOB … ${CMAKE_SOURCE_DIR}/RecompiledFuncs/*.c)`**; **`config/aerofighters_assault.n64recomp.toml`** **`output_func_path`** — see **`lib/README.txt`**.
 
+**BUILDING.md § 4 (PEs in engine root):** copy **`tools/N64Recomp.exe`** and **`tools/RSPRecomp.exe`** next to upstream **`us.rev1.toml`**:
+
+  .\tools\phase6_copy_n64recomp_to_engine.ps1
+
+Optional: **`-WhatIf`** lists destinations only. Same binaries as Phase 5 (**`tools/README.txt`**); not a substitute for MM ROM / TOML runs.
+
 Follow **`lib/Zelda64Recomp/BUILDING.md`** for ROM extraction, nested submodules, and RT64 prerequisites before expecting configure to succeed.
 
 ---
