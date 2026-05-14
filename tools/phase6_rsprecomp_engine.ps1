@@ -1,8 +1,7 @@
 # Phase 6 — run RSPRecomp in lib/Zelda64Recomp/ to emit rsp/aspMain.cpp and rsp/njpgdspMain.cpp.
 #
-# Upstream lib/Zelda64Recomp/BUILDING.md §4: from the engine root, ./RSPRecomp aspMain.us.rev1.toml and
-# ./RSPRecomp njpgdspMain.us.rev1.toml after the decompressed MM ROM is present (aspMain.us.rev1.toml /
-# njpgdspMain.us.rev1.toml reference rom_file_path = "mm.us.rev1.rom_uncompressed.z64").
+# Upstream lib/Zelda64Recomp/BUILDING.md section 4: after ./N64Recomp us.rev1.toml, from the engine root run
+# ./RSPRecomp aspMain.us.rev1.toml and ./RSPRecomp njpgdspMain.us.rev1.toml (rom_file_path = "mm.us.rev1.rom_uncompressed.z64").
 #
 # Prereqs: tools/RSPRecomp.exe (see tools/README.txt); run tools/phase6_copy_n64recomp_to_engine.ps1 so
 # RSPRecomp.exe exists in the engine root, or pass -CopyTools to copy automatically.
@@ -34,7 +33,7 @@ if (-not (Test-Path -LiteralPath $Rom)) {
     Write-Error @"
 Missing decompressed MM ROM at:
   $Rom
-Per lib/Zelda64Recomp/BUILDING.md §3, place mm.us.rev1.rom_uncompressed.z64 in the engine root before RSPRecomp.
+Per lib/Zelda64Recomp/BUILDING.md section 3, place mm.us.rev1.rom_uncompressed.z64 in the engine root before RSPRecomp.
 "@
 }
 

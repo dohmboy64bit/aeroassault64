@@ -1,8 +1,10 @@
 # Phase 6 — one-shot Windows prep after submodule init (optional convenience).
 # Runs: RecompiledFuncs junction -> copy N64Recomp/RSPRecomp into engine -> verify_phase6_layout.py
-# Optional -RspRecomp: if lib/Zelda64Recomp/mm.us.rev1.rom_uncompressed.z64 exists, runs tools/phase6_rsprecomp_engine.ps1
-# (BUILDING.md §4). Does not run CMake or ./N64Recomp us.rev1.toml — see lib/Zelda64Recomp/BUILDING.md.
+# Optional -N64RecompMm: if lib/Zelda64Recomp/mm.us.rev1.rom_uncompressed.z64 exists, runs tools/phase6_n64recomp_mm.ps1
+# Optional -RspRecomp: same ROM check, runs tools/phase6_rsprecomp_engine.ps1 (BUILDING.md section 4; run after CPU recomp).
+# If both switches are set, N64Recomp runs first, then RSPRecomp. Does not run CMake — see lib/Zelda64Recomp/BUILDING.md.
 param(
+    [switch]$N64RecompMm,
     [switch]$RspRecomp
 )
 $ErrorActionPreference = 'Stop'
@@ -14,11 +16,18 @@ Set-Location $RepoRoot
 
 $engineRoot = Join-Path $RepoRoot 'lib\Zelda64Recomp'
 $mmRom = Join-Path $engineRoot 'mm.us.rev1.rom_uncompressed.z64'
+if ($N64RecompMm) {
+    if (Test-Path -LiteralPath $mmRom) {
+        & (Join-Path $PSScriptRoot 'phase6_n64recomp_mm.ps1')
+    } else {
+        Write-Host "Skip -N64RecompMm: missing $mmRom (BUILDING.md section 3)."
+    }
+}
 if ($RspRecomp) {
     if (Test-Path -LiteralPath $mmRom) {
         & (Join-Path $PSScriptRoot 'phase6_rsprecomp_engine.ps1')
     } else {
-        Write-Host "Skip -RspRecomp: missing $mmRom (BUILDING.md §3)."
+        Write-Host "Skip -RspRecomp: missing $mmRom (BUILDING.md section 3)."
     }
 }
 

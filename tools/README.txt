@@ -67,10 +67,12 @@ Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`**
 
 **CI / clean clone (no generated `RecompiledFuncs/*.c`):** **`.\tools\phase6_ci_ensure_recompiledfuncs_stub.ps1`** — writes a one-file stub only when the directory has no **`.c`** sources so **`lib/Zelda64Recomp/CMakeLists.txt`** `add_library(RecompiledFuncs …)` is legal. A full **`Zelda64Recompiled.exe`** link still requires real N64Recomp output locally (see **`config/aerofighters_assault.n64recomp.toml`**).
 
-Convenience (runs junction + copy + **`python tools/verify_phase6_layout.py`**). Optional **`-RspRecomp`**: if **`lib/Zelda64Recomp/mm.us.rev1.rom_uncompressed.z64`** exists, runs **`tools/phase6_rsprecomp_engine.ps1`** (otherwise skips with a message).
+Convenience (runs junction + copy + **`python tools/verify_phase6_layout.py`**). Optional **`-N64RecompMm`** / **`-RspRecomp`**: if **`lib/Zelda64Recomp/mm.us.rev1.rom_uncompressed.z64`** exists, runs **`tools/phase6_n64recomp_mm.ps1`** and/or **`tools/phase6_rsprecomp_engine.ps1`** (N64 first when both). Otherwise skips with a message.
 
   .\tools\phase6_setup_windows.ps1
+  .\tools\phase6_setup_windows.ps1 -N64RecompMm
   .\tools\phase6_setup_windows.ps1 -RspRecomp
+  .\tools\phase6_setup_windows.ps1 -N64RecompMm -RspRecomp
 
 **Repo-root CMake (optional):** **`CMakeLists.txt`** uses **`ExternalProject_Add(zelda64recomp_engine)`** so the inner project keeps **`lib/Zelda64Recomp`** as **`CMAKE_SOURCE_DIR`** (same reason direct **`cmake -S lib/Zelda64Recomp`** is used elsewhere). Presets (**`CMakePresets.json`** schema v3 — [cmake-presets(7)](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html)):
 
@@ -95,6 +97,8 @@ Visual Studio: open the **AeroAssault64** repo folder, pick preset **`engine-sup
   .\tools\phase6_copy_n64recomp_to_engine.ps1
 
 Optional: **`-WhatIf`** lists destinations only. Same binaries as Phase 5 (**`tools/README.txt`**); not a substitute for MM ROM / TOML runs.
+
+**MM CPU recomp (Majora's Mask, BUILDING.md section 4):** **`.\tools\phase6_n64recomp_mm.ps1`** runs **`N64Recomp.exe us.rev1.toml`** in **`lib/Zelda64Recomp/`** after **`mm.us.rev1.rom_uncompressed.z64`** is there (section 3). Run **before** **`phase6_rsprecomp_engine.ps1`** when following upstream order. Optional **`-CopyTools`** / **`-WhatIf`**. Makefile: **`make phase6-n64recomp-mm`**.
 
 **RSP C++ (Majora's Mask, BUILDING.md §4):** after **`mm.us.rev1.rom_uncompressed.z64`** is in **`lib/Zelda64Recomp/`** (§3), run **`.\tools\phase6_rsprecomp_engine.ps1`** — invokes **`RSPRecomp.exe`** on **`aspMain.us.rev1.toml`** and **`njpgdspMain.us.rev1.toml`**, producing **`lib/Zelda64Recomp/rsp/aspMain.cpp`** and **`njpgdspMain.cpp`** (gitignored upstream). Optional **`-CopyTools`** runs **`phase6_copy_n64recomp_to_engine.ps1`** first; **`-WhatIf`** prints intent only.
 

@@ -100,9 +100,10 @@ def main() -> int:
     print()
     if bridged:
         print("NOTE: lib/Zelda64Recomp/RecompiledFuncs is the same directory as repo-root RecompiledFuncs (junction/symlink).")
-        print("      MM CPU recomp output still requires ./N64Recomp us.rev1.toml in the engine tree when doing stock MM.")
+        print("      MM CPU recomp: ./N64Recomp us.rev1.toml in the engine tree — Windows helper: tools/phase6_n64recomp_mm.ps1.")
     elif eng_rf.exists() and not mm_funcs_ok:
         print("NOTE: RecompiledFuncs bridge exists but no *.c/*.cpp — run MM ./N64Recomp us.rev1.toml or AFA recomp as appropriate.")
+        print("      Windows: tools/phase6_n64recomp_mm.ps1 (repo root) after BUILDING.md section 3 ROM is in lib/Zelda64Recomp/.")
 
     rsp_asp = ENGINE / "rsp" / "aspMain.cpp"
     rsp_njpg = ENGINE / "rsp" / "njpgdspMain.cpp"
