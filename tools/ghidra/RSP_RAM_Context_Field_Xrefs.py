@@ -35,8 +35,13 @@ FIELD_OFFSETS = (
 # Cap listing length per field (raise if truncated).
 MAX_REFS_TO_PRINT = 50
 
-# If True, try **`Memory.getBytes`** for 4 bytes at each field (undefined memory prints a note).
-READ_BE_WORD_AT_EACH_FIELD = True
+# If True, list **branch/jump** xrefs (FLOW) as well as **DATA** xrefs. FLOW hits mean “this
+# address is a label / jump table slot”, not “someone loaded the word here” — see printed `kind=`.
+SHOW_FLOW_INCOMING = True
+
+# If True, list outgoing **FLOW** refs (code at this VA). Often code/data overlap in `.bss` —
+# treat as Listing hint, not a stored pointer.
+SHOW_FLOW_OUTGOING = True
 
 
 def get_block_exact(mem, name):
@@ -104,6 +109,20 @@ def _fn_label(fm, addr):
     return "%s" % fn.getName()
 
 
+def _ref_kind(rt):
+    """FLOW = branch/jump/call edge; DATA = memory ref; OTHER."""
+    try:
+        if rt.isCall():
+            return "FLOW"
+        if rt.isJump() or rt.isConditional() or rt.isUnconditional():
+            return "FLOW"
+        if rt.isData() or rt.isRead() or rt.isWrite():
+            return "DATA"
+    except Exception:
+        pass
+    return "OTHER"
+
+
 def main():
     prog = currentProgram  # noqa: F821
     mem = prog.getMemory()
@@ -134,6 +153,9 @@ def main():
     print("Base: %s  (offsets: %s)" % (base, ", ".join("+0x%X" % o for o in FIELD_OFFSETS)))
     print("")
 
+    zero_reads = 0
+    nonzero_reads = 0
+
     for off in FIELD_OFFSETS:
         try:
             faddr = base.add(off)
@@ -149,6 +171,10 @@ def main():
                 print("  stored word: (could not read 4 bytes — undefined or gap)")
             else:
                 print("  stored word (BE u32): 0x%08X" % w)
+                if w == 0:
+                    zero_reads += 1
+                else:
+                    nonzero_reads += 1
                 try:
                     p = space.getAddress(int(w) & 0xFFFFFFFF)
                     roff = rom_file_offset(rom, p)
@@ -165,8 +191,19 @@ def main():
                 except Exception as ex:
                     print("    -> (could not decode pointer: %s)" % ex)
 
-        refs = list(_iter_references_to(ref_mgr, faddr))
-        print("  incoming xrefs: %d" % len(refs))
+        raw_in = list(_iter_references_to(ref_mgr, faddr))
+        flow_in = sum(1 for r in raw_in if _ref_kind(r.getReferenceType()) == "FLOW")
+        data_in = sum(1 for r in raw_in if _ref_kind(r.getReferenceType()) == "DATA")
+        refs = raw_in if SHOW_FLOW_INCOMING else [r for r in raw_in if _ref_kind(r.getReferenceType()) != "FLOW"]
+        print(
+            "  incoming xrefs: %d raw (FLOW=%d DATA=%d)%s"
+            % (
+                len(raw_in),
+                flow_in,
+                data_in,
+                "" if SHOW_FLOW_INCOMING else " — listing excludes FLOW",
+            )
+        )
         n = 0
         for ref in refs[:MAX_REFS_TO_PRINT]:
             n += 1
@@ -178,37 +215,60 @@ def main():
                 rts = str(rt)
             ins = prog.getListing().getInstructionAt(fa)
             ins_s = ins.toString().replace("\n", " ")[:72] if ins is not None else "(data label?)"
+            rk = _ref_kind(rt)
             print(
-                "    [%d] from %s  type=%s  fn=%s"
-                % (n, fa, rts, _fn_label(fm, fa))
+                "    [%d] kind=%s  from %s  type=%s  fn=%s"
+                % (n, rk, fa, rts, _fn_label(fm, fa))
             )
             print("         %s" % ins_s)
         if len(refs) > MAX_REFS_TO_PRINT:
             print("    ... truncated (%d more)" % (len(refs) - MAX_REFS_TO_PRINT))
 
-        out_refs = list(_iter_references_from(ref_mgr, faddr))
-        if out_refs:
+        out_raw = list(_iter_references_from(ref_mgr, faddr))
+        out_refs = (
+            out_raw if SHOW_FLOW_OUTGOING else [r for r in out_raw if _ref_kind(r.getReferenceType()) != "FLOW"]
+        )
+        if out_raw:
+            oflow = sum(1 for r in out_raw if _ref_kind(r.getReferenceType()) == "FLOW")
+            odata = sum(1 for r in out_raw if _ref_kind(r.getReferenceType()) == "DATA")
             print(
-                "  outgoing xrefs from this address (stored pointer / data): %d"
-                % len(out_refs)
+                "  outgoing xrefs: %d raw (FLOW=%d DATA=%d)%s"
+                % (
+                    len(out_raw),
+                    oflow,
+                    odata,
+                    "" if SHOW_FLOW_OUTGOING else " — listing excludes FLOW",
+                )
             )
-            for i, ref in enumerate(out_refs[:15], 1):
-                ta = ref.getToAddress()
-                try:
-                    rts = ref.getReferenceType().toString()
-                except Exception:
-                    rts = str(ref.getReferenceType())
-                roff = rom_file_offset(rom, ta)
-                extra = ""
-                if roff is not None:
-                    extra = "  -> .rom file offset 0x%X" % roff
-                print("    [%d] to %s  type=%s%s" % (i, ta, rts, extra))
-            if len(out_refs) > 15:
-                print("    ... %d more" % (len(out_refs) - 15))
+            if out_refs:
+                for i, ref in enumerate(out_refs[:15], 1):
+                    ta = ref.getToAddress()
+                    rt = ref.getReferenceType()
+                    try:
+                        rts = rt.toString()
+                    except Exception:
+                        rts = str(rt)
+                    rk = _ref_kind(rt)
+                    roff = rom_file_offset(rom, ta)
+                    extra = ""
+                    if rk == "DATA" and roff is not None:
+                        extra = "  -> .rom file offset 0x%X" % roff
+                    print("    [%d] kind=%s  to %s  type=%s%s" % (i, rk, ta, rts, extra))
+                if len(out_refs) > 15:
+                    print("    ... %d more" % (len(out_refs) - 15))
+            elif not SHOW_FLOW_OUTGOING and oflow > 0:
+                print("    (all outgoing refs are FLOW — enable SHOW_FLOW_OUTGOING to list them)")
 
         print("")
 
     print("Docs: lib/Zelda64Recomp/AFA_PORT.md section 1; `text_offset`/`text_size` in config/afa_rsp/*.template.toml")
+    if READ_BE_WORD_AT_EACH_FIELD and zero_reads > 0 and nonzero_reads == 0:
+        print("")
+        print("Note: every readable field was 0x0 in the static image — common for .bss zero-init")
+        print("      and runtime `sw` fills before `lw a2,0x8(s2)` sees real src/size. Trace writers")
+        print("      to this base (e.g. xref from FUN_80283824) or use emulator RAM.")
+        print("      Incoming kind=FLOW = control-flow to this address (e.g. `beq` label), not a load")
+        print("      of the stored word. Outgoing kind=FLOW = jump from bytes at this VA (code/data mix).")
 
 
 main()
