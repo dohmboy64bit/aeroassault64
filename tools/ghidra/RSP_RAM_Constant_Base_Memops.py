@@ -260,6 +260,12 @@ def _check_memop(ins, known, want_addrs, hits, fn, max_hits):
 
 def main():
     prog = currentProgram  # noqa: F821
+    _g = globals()
+    if "RESET_KNOWN_PER_FUNCTION" not in _g:
+        _g["RESET_KNOWN_PER_FUNCTION"] = True
+    if "JAL_KNOWN_V0_BY_CALLEE_ENTRY" not in _g:
+        _g["JAL_KNOWN_V0_BY_CALLEE_ENTRY"] = {0x8023D820: 0x802839B0}
+
     mem = prog.getMemory()
     listing = prog.getListing()
     ref_mgr = prog.getReferenceManager()
