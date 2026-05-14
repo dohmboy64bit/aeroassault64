@@ -2,7 +2,7 @@
 # Prerequisite: from repo root run `python3 -m splat split config/splat.yaml` so asm/, assets/ipl3.bin, and build/*.ld exist.
 # See Docs/Workflow.md and https://github.com/ethteck/splat/wiki/General-Workflow
 
-.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync verify-entrypoint-sync verify-phase6-layout phase6-mm-prereq check help
+.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync verify-entrypoint-sync verify-phase6-layout phase6-mm-prereq phase6-rsprecomp check help
 
 .DEFAULT_GOAL := all
 
@@ -18,6 +18,7 @@ help:
 	@echo "  make check          - ROM-free: splat/Makefile + rodata + entrypoint + N64Recomp TOML + phase6 layout + py_compile tools"
 	@echo "  make verify-phase6-layout - python3 tools/verify_phase6_layout.py (RecompiledFuncs bridge vs engine)"
 	@echo "  make phase6-mm-prereq  - python3 tools/phase6_mm_engine_prereq_check.py (MM engine / BUILDING.md checklist)"
+	@echo "  make phase6-rsprecomp - Windows: pwsh tools/phase6_rsprecomp_engine.ps1 (MM RSP outputs; needs ROM in engine root)"
 	@echo "  make clean          - remove $(ELF), objects, extern ld"
 	@echo "See Docs/Workflow.md and tools/README.txt."
 
@@ -112,6 +113,10 @@ verify-phase6-layout:
 # Phase 6: optional audit for stock Zelda64Recomp (MM) prerequisites (BUILDING.md). Not part of make check.
 phase6-mm-prereq:
 	python3 tools/phase6_mm_engine_prereq_check.py
+
+# Windows / PowerShell 7+: requires mm.us.rev1.rom_uncompressed.z64 under lib/Zelda64Recomp/ (BUILDING.md §3).
+phase6-rsprecomp:
+	pwsh -NoProfile -ExecutionPolicy Bypass -File tools/phase6_rsprecomp_engine.ps1
 
 check-split:
 	@test -f $(LDSCRIPT) || (echo "Missing $(LDSCRIPT). Run: $(SPLAT) split $(SPLIT_CFG)"; exit 1)

@@ -104,6 +104,14 @@ def main() -> int:
     elif eng_rf.exists() and not mm_funcs_ok:
         print("NOTE: RecompiledFuncs bridge exists but no *.c/*.cpp — run MM ./N64Recomp us.rev1.toml or AFA recomp as appropriate.")
 
+    rsp_asp = ENGINE / "rsp" / "aspMain.cpp"
+    rsp_njpg = ENGINE / "rsp" / "njpgdspMain.cpp"
+    if not rsp_asp.is_file() or not rsp_njpg.is_file():
+        print(
+            "HINT: rsp/*.cpp missing — on Windows after BUILDING.md section 3 ROM is in lib/Zelda64Recomp/, run "
+            "tools/phase6_rsprecomp_engine.ps1 (see tools/README.txt Phase 6)."
+        )
+
     print()
     if not missing_required:
         print("Summary: all listed MM-required paths are present (or RecompiledFuncs populated).")

@@ -67,9 +67,10 @@ Optional: **`-Generator "Visual Studio 17 2022"`** (use **`-BuildType Release`**
 
 **CI / clean clone (no generated `RecompiledFuncs/*.c`):** **`.\tools\phase6_ci_ensure_recompiledfuncs_stub.ps1`** — writes a one-file stub only when the directory has no **`.c`** sources so **`lib/Zelda64Recomp/CMakeLists.txt`** `add_library(RecompiledFuncs …)` is legal. A full **`Zelda64Recompiled.exe`** link still requires real N64Recomp output locally (see **`config/aerofighters_assault.n64recomp.toml`**).
 
-Convenience (runs junction + copy + **`python tools/verify_phase6_layout.py`**):
+Convenience (runs junction + copy + **`python tools/verify_phase6_layout.py`**). Optional **`-RspRecomp`**: if **`lib/Zelda64Recomp/mm.us.rev1.rom_uncompressed.z64`** exists, runs **`tools/phase6_rsprecomp_engine.ps1`** (otherwise skips with a message).
 
   .\tools\phase6_setup_windows.ps1
+  .\tools\phase6_setup_windows.ps1 -RspRecomp
 
 **Repo-root CMake (optional):** **`CMakeLists.txt`** uses **`ExternalProject_Add(zelda64recomp_engine)`** so the inner project keeps **`lib/Zelda64Recomp`** as **`CMAKE_SOURCE_DIR`** (same reason direct **`cmake -S lib/Zelda64Recomp`** is used elsewhere). Presets (**`CMakePresets.json`** schema v3 — [cmake-presets(7)](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html)):
 
