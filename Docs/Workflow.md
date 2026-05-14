@@ -262,7 +262,7 @@ Phase **4** is **closed at smoke level** when: **`make strict-verify`** is docum
 
 ### Phase 6 checklist
 
-- [x] **`lib/Zelda64Recomp`** present as submodule (**`dev`**); **`git submodule update --init --recursive`** documented in **`lib/README.txt`**. **Pin:** **`ab677e76615e5e47b3b26c822ca426485752ac77`** (**2026-05-13**).
+- [x] **`lib/Zelda64Recomp`** present as submodule (**`dev`**); **`git submodule update --init --recursive`** documented in **`lib/README.txt`**. **Pin:** **`f1555039a036a6304ddc391d5b3969ae6ca561e2`** (**2026-05-13**).
 - [x] **Windows one-shot prep** — **`tools/phase6_setup_windows.ps1`** chains junction + PE copy + **`verify_phase6_layout.py`** (documented in **`Docs/Workflow.md`** Phase 6 table).
 - [x] **Repo-root CMake superbuild** — **`CMakeLists.txt`** + **`CMakePresets.json`**: **`ExternalProject_Add(zelda64recomp_engine)`** with inner **`SOURCE_DIR`** **`lib/Zelda64Recomp`** and **`BINARY_DIR`** **`build-engine/`** (preserves upstream **`CMAKE_SOURCE_DIR`**; see **`lib/README.txt`**).
 - [x] **MM engine prereq audit** — **`tools/phase6_mm_engine_prereq_check.py`** + **`make phase6-mm-prereq`** ( **`--strict`** optional); **`Docs/Debugging.md`** MM baseline bullet.

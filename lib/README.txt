@@ -1,7 +1,7 @@
 Engine submodule (**tracked**)
 
 Upstream: https://github.com/Mr-Wiseguy/Zelda64Recomp  
-**Branch tracked:** `dev` (see **`.gitmodules`**). **Pinned commit (this repo):** `ab677e76615e5e47b3b26c822ca426485752ac77` (`ab677e7` short).
+**Branch tracked:** `dev` (see **`.gitmodules`**). **Pinned commit (this repo):** `f1555039a036a6304ddc391d5b3969ae6ca561e2` (`f155503` short).
 
 After a fresh clone from repo root:
 
@@ -14,7 +14,7 @@ Then open **`lib/Zelda64Recomp/BUILDING.md`** for RT64, nested submodules, depen
 Upstream **`lib/Zelda64Recomp/CMakeLists.txt`** uses **`CMAKE_SOURCE_DIR`** for **`lib/rt64`**, **`RecompiledFuncs/`**, etc., so the engine must be configured with **that directory as the CMake source root** — not by `add_subdirectory` from the AeroAssault64 repo root unless the engine is refactored.
 
 - **Script (repo root, PowerShell):** **`tools/phase6_engine_cmake.ps1`** — **`cmake -S lib/Zelda64Recomp -B build-engine`** (default **Ninja** + **Release**); see **`tools/README.txt`** § Phase 6.
-- **Repo-root CMake (VS / presets):** **`CMakeLists.txt`** + **`CMakePresets.json`** — presets **`engine-superbuild-ninja-release`** and **`engine-superbuild-vs2022-release`** configure **`build-root/`** or **`build-root-vs2022/`** and drive **`ExternalProject_Add(zelda64recomp_engine)`** into **`build-engine/`** (same inner **`CMAKE_SOURCE_DIR`** as direct **`-S lib/Zelda64Recomp`**).
+- **Repo-root CMake (VS / presets):** **`CMakeLists.txt`** + **`CMakePresets.json`** — presets **`engine-superbuild-ninja-release`**, **`engine-superbuild-vs2022-release`**, and **`engine-superbuild-ninja-release-no-mm`** configure **`build-root/`**, **`build-root-vs2022/`**, or **`build-root-no-mm/`** and drive **`ExternalProject_Add(zelda64recomp_engine)`** into **`build-engine/`** (same inner **`CMAKE_SOURCE_DIR`** as direct **`-S lib/Zelda64Recomp`**).
 - **Vendored recompilers (BUILDING.md § 4):** **`tools/phase6_copy_n64recomp_to_engine.ps1`** — copies **`tools/N64Recomp.exe`** and **`tools/RSPRecomp.exe`** into **`lib/Zelda64Recomp/`** (ignored by submodule **`*.gitignore`** **`*.exe`**).
 - **One-shot prep:** **`tools/phase6_setup_windows.ps1`** — junction + copy + **`verify_phase6_layout.py`** (see **`tools/README.txt`**).
 - **MM prerequisite audit:** **`make phase6-mm-prereq`** (repo root, needs **`make`** + Python) or **`python3 tools/phase6_mm_engine_prereq_check.py`** — lists gaps vs **`lib/Zelda64Recomp/BUILDING.md`**; **`--strict`** fails if required files are missing.
