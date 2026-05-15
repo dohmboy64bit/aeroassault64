@@ -2,7 +2,7 @@
 # Prerequisite: from repo root run `python3 -m splat split config/splat.yaml` so asm/, assets/ipl3.bin, and build/*.ld exist.
 # See Docs/Workflow.md and https://github.com/ethteck/splat/wiki/General-Workflow
 
-.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync verify-entrypoint-sync verify-phase6-layout phase6-mm-prereq phase6-n64recomp-mm phase6-rsprecomp phase6-rsprecomp-afa phase6-materialize-stubs phase5-aero-n64recomp-win check help
+.PHONY: all split clean check-split verify dedupe-bss strict-verify n64recomp elf-sanity verify-rodata-sync verify-splat-makefile-sync verify-entrypoint-sync verify-phase6-layout phase6-mm-prereq phase6-n64recomp-mm phase6-rsprecomp phase6-rsprecomp-afa phase6-full-recomp-afa-win phase6-materialize-stubs phase5-aero-n64recomp-win phase6-afa-generate-syms-win check help
 
 .DEFAULT_GOAL := all
 
@@ -15,7 +15,7 @@ help:
 	@echo "  make dedupe-bss     - strip duplicate BSS lines (needs post_data.o)"
 	@echo "  make strict-verify  - dedupe-bss + LINK_STRICT=1 verify + elf-sanity"
 	@echo "  make n64recomp      - run tools/N64Recomp.exe with N64RECOMP_CFG (needs $(ELF), often from WSL)"
-	@echo "  make check          - ROM-free: splat/Makefile + rodata + entrypoint + N64Recomp TOML + phase6 layout + py_compile tools"
+	@echo "  make check          - ROM-free: splat/Makefile + rodata + entrypoint + N64Recomp TOML + phase6 layout + py_compile all tools/*.py"
 	@echo "  make verify-phase6-layout - python3 tools/verify_phase6_layout.py (RecompiledFuncs bridge vs engine)"
 	@echo "  make phase6-materialize-stubs - python3 tools/phase6_materialize_no_mm_engine_files.py (RecompiledPatches headers for -NoMmRom/-AfaProduct)"
 	@echo "  make phase6-mm-prereq  - python3 tools/phase6_mm_engine_prereq_check.py (MM engine / BUILDING.md checklist)"
@@ -23,6 +23,8 @@ help:
 	@echo "  make phase5-aero-n64recomp-win - Windows: pwsh tools/phase5_run_aero_n64recomp.ps1 (AFA TOML; needs $(ELF), tools/N64Recomp.exe)"
 	@echo "  make phase6-rsprecomp - Windows: pwsh tools/phase6_rsprecomp_engine.ps1 (MM RSP outputs; needs ROM in engine root)"
 	@echo "  make phase6-rsprecomp-afa - Windows: pwsh tools/phase6_rsprecomp_afa.ps1 (AFA TOMLs at engine root; see config/afa_rsp/)"
+	@echo "  make phase6-full-recomp-afa-win - Windows: pwsh tools/phase6_full_recomp_afa.ps1 (CPU N64Recomp + RSP chain; see AFA_PORT.md)"
+	@echo "  make phase6-afa-generate-syms-win - Windows: pwsh tools/phase6_afa_generate_syms.ps1 (Zelda64RecompSyms/afa.n64.us.* from ELF)"
 	@echo "  make clean          - remove $(ELF), objects, extern ld"
 	@echo "See Docs/Workflow.md and tools/README.txt."
 
@@ -91,11 +93,14 @@ n64recomp: $(ELF)
 	@test -f $(N64RECOMP_EXE) || (echo "Missing $(N64RECOMP_EXE)"; exit 1)
 	$(N64RECOMP_EXE) $(N64RECOMP_CFG)
 
+# Root-level Python helpers only (`tools/ghidra/*.py` are PyGhidra — not compiled here).
+TOOLS_ROOT_PY := $(wildcard tools/*.py)
+
 # ROM-free sanity (CI / quick local): splat/Makefile, rodata Ghidra tuple, triple entrypoint, N64Recomp TOML shape, py_compile.
 check: verify-splat-makefile-sync verify-rodata-sync verify-entrypoint-sync
 	python3 tools/verify_n64recomp_toml.py
 	python3 tools/verify_phase6_layout.py
-	python3 -m py_compile tools/dedupe_post_data_bss.py tools/n64recomp_stub_until_green.py tools/verify_rodata_splits_sync.py tools/verify_splat_makefile_sync.py tools/verify_entrypoint_sync.py tools/verify_n64recomp_toml.py tools/verify_phase6_layout.py tools/phase6_mm_engine_prereq_check.py tools/gen_splat_extern_ld.py tools/compute_aero_rom_xxh3.py tools/phase6_materialize_no_mm_engine_files.py
+	python3 -m py_compile $(TOOLS_ROOT_PY)
 	@echo "OK: make check"
 
 # splat entry vram / symbol_addrs entrypoint / N64Recomp [input].entrypoint must agree.
@@ -134,9 +139,13 @@ phase5-aero-n64recomp-win:
 phase6-rsprecomp:
 	pwsh -NoProfile -ExecutionPolicy Bypass -File tools/phase6_rsprecomp_engine.ps1
 
-# Windows / PowerShell 7+: AFA USA RSP outputs — filled aspMain.afa.us.toml + njpgdspMain.afa.us.toml in engine root (lib/Zelda64Recomp/AFA_PORT.md section 1).
-phase6-rsprecomp-afa:
-	pwsh -NoProfile -ExecutionPolicy Bypass -File tools/phase6_rsprecomp_afa.ps1
+# Windows / PowerShell 7+: AFA CPU + RSP in one script (junction + N64Recomp + RSPRecomp; see lib/Zelda64Recomp/AFA_PORT.md).
+phase6-full-recomp-afa-win:
+	pwsh -NoProfile -ExecutionPolicy Bypass -File tools/phase6_full_recomp_afa.ps1
+
+# Windows: N64Recomp --dump-context -> lib/Zelda64Recomp/Zelda64RecompSyms/afa.n64.us.* (needs $(ELF)).
+phase6-afa-generate-syms-win:
+	pwsh -NoProfile -ExecutionPolicy Bypass -File tools/phase6_afa_generate_syms.ps1
 
 check-split:
 	@test -f $(LDSCRIPT) || (echo "Missing $(LDSCRIPT). Run: $(SPLAT) split $(SPLIT_CFG)"; exit 1)

@@ -24,6 +24,19 @@ output_func_path = "../RecompiledFuncs"
 [patches]
 
 stubs = [
+    # Patched by AFA PatchesLib (patches/afa/required_patches_afa.c) — omit from CPU RecompiledFuncs to avoid LNK2005.
+    "func_80248B70",
+    "func_80248C50",
+    # SI poll + cart PIO (asm/4B540.s, asm/48FE0.s) — host bodies in src/game/afa_game_hooks.cpp (/FORCE:MULTIPLE).
+    "func_8024A710",
+    "func_80248040",
+    "func_80248090",
+    "func_8023E640",
+    "func_8023E3A0",
+    "func_80241EFC",
+    "func_80237210",
+    "func_80247490",
+    "func_8023E840",
     # N64Recomp warns: branching outside of the function (to 0x8024EAFC) — stub until CFG is stable.
     "func_8025A840",
     # `asm/4BE20.s` — `func_8024AE78`: handwritten COP0 / `jal` / `j` into `0x8400…`

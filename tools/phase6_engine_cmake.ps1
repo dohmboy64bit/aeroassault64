@@ -14,6 +14,7 @@
 # With -NoMmRom: run python3 tools/phase6_materialize_no_mm_engine_files.py (or make phase6-materialize-stubs) first, then pass -DAEROASSAULT64_NO_MM_ROM=ON (see lib/README.txt).
 # -AfaProduct: pass -DAEROASSAULT64_AFA_PRODUCT=ON (stub PatchesLib/RSP; still materialize RecompiledPatches headers first).
 # -AfaRetailPipelines: with -AfaProduct, also pass -DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON (real patches.toml path; see lib/Zelda64Recomp/AFA_PORT.md).
+# -AfaRspForceStubs: with -AfaProduct, pass -DAEROASSAULT64_AFA_RSP_FORCE_STUBS=ON (link RSP stubs even if rsp/*.cpp exist; MSVC bring-up).
 # -CiStub: run tools/phase6_ci_ensure_recompiledfuncs_stub.ps1 when RecompiledFuncs has no .c (matches CI / fresh clone).
 param(
     [ValidateSet('Configure', 'Build', 'All')]
@@ -23,7 +24,8 @@ param(
     [switch]$NoMmRom,
     [switch]$CiStub,
     [switch]$AfaProduct,
-    [switch]$AfaRetailPipelines
+    [switch]$AfaRetailPipelines,
+    [switch]$AfaRspForceStubs
 )
 $ErrorActionPreference = 'Stop'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
@@ -47,6 +49,9 @@ if ($AfaRetailPipelines) {
         Write-Warning '-AfaRetailPipelines is intended with -AfaProduct; forwarding -DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON anyway (engine may warn).'
     }
     $NoMmArgs += '-DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON'
+}
+if ($AfaRspForceStubs) {
+    $NoMmArgs += '-DAEROASSAULT64_AFA_RSP_FORCE_STUBS=ON'
 }
 
 switch ($Mode) {

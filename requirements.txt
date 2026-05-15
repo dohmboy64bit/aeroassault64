@@ -1,3 +1,7 @@
 # Pin from splat README: https://github.com/ethteck/splat/blob/main/README.md
 # Install in WSL: python3 -m pip install -U -r requirements.txt
 splat64[mips]>=0.40.0,<1.0.0
+
+# Optional: Python Capstone — host CLI **`tools/rsp_rom_capstone_mips.py`** (e.g. **`--afa-usa-hints`**) and
+# PyGhidra **`tools/ghidra/RSPRecomp_Confirm_Findings.py`**. Install in the env you use for each (**`pip install capstone`**).
+capstone>=5.0,<6.0.0

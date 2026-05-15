@@ -5,8 +5,8 @@
 # from **`JAL_KNOWN_V0_BY_CALLEE_ENTRY`** when return value is built in the callee, not the caller).
 #
 # Automates “find **`sw`** writers / **`lw`** readers of **`0x802839B8`**” when **`getReferencesTo`**
-# only shows **FLOW** edges (**`RSP_RAM_Context_Field_Xrefs.py`**). **Branches / calls** make the
-# model wrong — verify hits in Listing / decompiler.
+# only shows **DATA** reads (no **`sw`** xrefs — **`stores_xref`** then stays empty while xref counts
+# show **`lw`**). **Branches / calls** make the constant-base model wrong — verify hits in Listing / decompiler.
 #
 # Same **`.ram`** block as **`Phase2_Closeout_Report.py`**. **`text_offset`/`text_size`**: see
 # **`config/afa_rsp/*.template.toml`**, **`lib/Zelda64Recomp/AFA_PORT.md`** §1.
@@ -29,8 +29,9 @@ BASE_VRAM = 0x802839B0
 MEM_OFFSETS = (0, 0x8, 0xC)
 
 # **`"all"`** — any **`lw`/`sw`/…** in **`_MEM_RE`** matching EA. **`"stores"`** — only **`sw`/`sh`/`sb`**
-# (who writes **`BASE+off`** — set this to hunt **`text_offset`/`text_size`** fills). **`"loads"`** —
-# only **`lw`/`lhu`/`lbu`/`lb`** (who reads those slots).
+# with constant base (often **0 hits** if writers use **`gp`/`sp`** or unknown base). **`"stores_xref"`**
+# — **`getReferencesTo(BASE+off)`** then keep **`sw`/`sh`/`sb`** at the ref source (Ghidra-emitted DATA
+# writes). **`"loads"`** — only **`lw`/`lhu`/`lbu`/`lb`**.
 MEMOP_RUN = "all"
 
 # Stop after this many hits (raise if truncated).
@@ -236,13 +237,115 @@ def _apply_constant_semantics(ins, known, ref_mgr, fm):
 
 def _memop_filter_tuple():
     r = str(MEMOP_RUN).lower().strip()
+    if r == "stores_xref":
+        return "stores_xref"
     if r == "stores":
         return frozenset(("sw", "sh", "sb"))
     if r == "loads":
         return frozenset(("lw", "lhu", "lbu", "lb"))
     if r != "all":
-        print("WARNING: MEMOP_RUN should be all|stores|loads — using all.")
+        print("WARNING: MEMOP_RUN should be all|stores|stores_xref|loads — using all.")
     return None
+
+
+def _iter_references_to(ref_mgr, addr):
+    refs = ref_mgr.getReferencesTo(addr)
+    if refs is None:
+        return
+    if hasattr(refs, "hasNext") and callable(getattr(refs, "hasNext", None)):
+        while refs.hasNext():
+            yield refs.next()
+        return
+    try:
+        for ref in refs:
+            yield ref
+    except TypeError:
+        pass
+
+
+def _run_stores_xref_scan(listing, ref_mgr, fm, ram, want_addrs, max_hits):
+    """Hits from DATA/write xrefs to each EA (mnemonic sw/sh/sb at from-address)."""
+    space = ram.getStart().getAddressSpace()
+    hits = []
+    for ea in sorted(want_addrs):
+        if len(hits) >= max_hits:
+            break
+        try:
+            to_a = space.getAddress(int(ea) & 0xFFFFFFFF)
+        except Exception:
+            continue
+        if not ram.contains(to_a):
+            continue
+        for ref in _iter_references_to(ref_mgr, to_a):
+            if len(hits) >= max_hits:
+                break
+            fa = ref.getFromAddress()
+            if fa is None or not ram.contains(fa):
+                continue
+            ins = listing.getInstructionAt(fa)
+            if ins is None:
+                continue
+            mn = ins.getMnemonicString().lower()
+            if mn not in ("sw", "sh", "sb"):
+                continue
+            fn = fm.getFunctionContaining(fa)
+            try:
+                rts = ref.getReferenceType().toString()
+            except Exception:
+                rts = str(ref.getReferenceType())
+            hits.append(
+                (
+                    "STORE_XREF",
+                    int(fa.getOffset()),
+                    fn.getName() if fn else "?",
+                    fn.getEntryPoint() if fn else None,
+                    int(ea) & 0xFFFFFFFF,
+                    ins.toString().replace("\n", " ")[:88],
+                    rts,
+                )
+            )
+    return hits
+
+
+def _print_stores_xref_incoming_detail(listing, ref_mgr, ram, space, want_addrs, max_refs_per_ea):
+    """When Ghidra has xrefs but none are sw/sh/sb, show what the refs are (e.g. lw)."""
+    print("  Incoming xref detail (stores_xref only lists sw/sh/sb at these sites):")
+    for ea in sorted(want_addrs):
+        try:
+            to_a = space.getAddress(int(ea) & 0xFFFFFFFF)
+        except Exception:
+            continue
+        if not ram.contains(to_a):
+            continue
+        refs = list(_iter_references_to(ref_mgr, to_a))
+        if not refs:
+            continue
+        print("    EA 0x%08X — %d ref(s):" % (ea & 0xFFFFFFFF, len(refs)))
+        for ref in refs[: max_refs_per_ea if max_refs_per_ea > 0 else len(refs)]:
+            fa = ref.getFromAddress()
+            if fa is None:
+                print("      (null from-address)")
+                continue
+            try:
+                rts = ref.getReferenceType().toString()
+            except Exception:
+                rts = str(ref.getReferenceType())
+            ins = listing.getInstructionAt(fa)
+            if ins is None:
+                print(
+                    "      from=0x%08X  ref=%s  (no instruction)"
+                    % (int(fa.getOffset()) & 0xFFFFFFFF, rts)
+                )
+                continue
+            mn = ins.getMnemonicString().lower()
+            dis = ins.toString().replace("\n", " ")[:88]
+            tag = "store" if mn in ("sw", "sh", "sb") else "not-store"
+            print(
+                "      from=0x%08X  ref=%s  %s  %s"
+                % (int(fa.getOffset()) & 0xFFFFFFFF, rts, tag, dis)
+            )
+        if max_refs_per_ea > 0 and len(refs) > max_refs_per_ea:
+            print("      … (%d more)" % (len(refs) - max_refs_per_ea))
 
 
 def _check_memop(ins, known, want_addrs, hits, fn, max_hits, mnem_filter):
@@ -306,42 +409,80 @@ def main():
     print("Program: %s" % prog.getName())
     print("Want effective addresses: %s" % ", ".join("0x%08X" % a for a in sorted(want)))
     print(
-        "MEMOP_RUN=%s (use \"stores\" for sw/sh/sb writers to BASE+off; \"loads\" for lw/… readers)."
+        "MEMOP_RUN=%s (\"stores\"=constant-base sw; \"stores_xref\"=xref to EA+sw; \"loads\"=lw…)."
         % repr(MEMOP_RUN)
     )
     print("(lui/addiu/ori/or-copy/li; jal clears volatiles; optional JAL_KNOWN_V0_BY_CALLEE_ENTRY.)")
     print("")
 
     mnem_filter = _memop_filter_tuple()
-    ram_set = memory_block_as_address_set(ram)
     hits = []
-    cur_fn = None
-    known = {}
 
-    for ins in listing.getInstructions(ram_set, True):
-        if ins is None:
-            continue
-        fn = fm.getFunctionContaining(ins.getAddress())
-        if fn is None:
-            continue
-        if RESET_KNOWN_PER_FUNCTION and fn != cur_fn:
-            cur_fn = fn
-            known = {}
+    if mnem_filter == "stores_xref":
+        hits = _run_stores_xref_scan(listing, ref_mgr, fm, ram, want, MAX_HITS)
+    else:
+        ram_set = memory_block_as_address_set(ram)
+        cur_fn = None
+        known = {}
 
-        _check_memop(ins, known, want, hits, fn, MAX_HITS, mnem_filter)
-        if len(hits) >= MAX_HITS:
-            break
-        _apply_constant_semantics(ins, known, ref_mgr, fm)
+        for ins in listing.getInstructions(ram_set, True):
+            if ins is None:
+                continue
+            fn = fm.getFunctionContaining(ins.getAddress())
+            if fn is None:
+                continue
+            if RESET_KNOWN_PER_FUNCTION and fn != cur_fn:
+                cur_fn = fn
+                known = {}
+
+            _check_memop(ins, known, want, hits, fn, MAX_HITS, mnem_filter)
+            if len(hits) >= MAX_HITS:
+                break
+            _apply_constant_semantics(ins, known, ref_mgr, fm)
 
     hits.sort(key=lambda t: t[1])
     print("Hits: %d%s" % (len(hits), (" (MAX_HITS — raise tunable)" if len(hits) >= MAX_HITS else "")))
-    for kind, addr, name, ent, ea, dis in hits:
-        print("  [%s] @ 0x%X  %s @ %s  EA=0x%08X" % (kind, addr, name, ent, ea))
+    for row in hits:
+        if len(row) == 7:
+            kind, addr, name, ent, ea, dis, rts = row
+            print(
+                "  [%s] @ 0x%X  %s @ %s  EA=0x%08X  ref=%s"
+                % (kind, addr, name, ent, ea, rts)
+            )
+        else:
+            kind, addr, name, ent, ea, dis = row
+            print("  [%s] @ 0x%X  %s @ %s  EA=0x%08X" % (kind, addr, name, ent, ea))
         print("      %s" % dis)
 
     if not hits:
-        print("(none — widen patterns, add callee entries to JAL_KNOWN_V0_BY_CALLEE_ENTRY,")
-        print("      Listing search, or emulator RAM.)")
+        if mnem_filter == "stores_xref":
+            print(
+                "(none — no incoming xref from a sw/sh/sb; non-store refs (e.g. lw) do not count.)"
+            )
+        else:
+            print(
+                "(none — try MEMOP_RUN=\"stores_xref\"; widen patterns / JAL_KNOWN_V0; Listing / emu.)"
+            )
+
+    if mnem_filter == "stores_xref":
+        space = ram.getStart().getAddressSpace()
+        print("  Incoming xref counts (any ref type) to each EA:")
+        for ea in sorted(want):
+            try:
+                to_a = space.getAddress(int(ea) & 0xFFFFFFFF)
+            except Exception:
+                continue
+            if not ram.contains(to_a):
+                continue
+            n = sum(1 for _ in _iter_references_to(ref_mgr, to_a))
+            print("    0x%08X: %d" % (ea & 0xFFFFFFFF, n))
+        _print_stores_xref_incoming_detail(
+            listing, ref_mgr, ram, space, want, max_refs_per_ea=16
+        )
+        print(
+            "  Note: Ghidra may omit operand xrefs (e.g. +0xC lw → 0 refs); "
+            "MEMOP_RUN loads/all still finds those if the base is modeled."
+        )
 
     print("")
     print("Docs: lib/Zelda64Recomp/AFA_PORT.md §1; pair: tools/ghidra/RSP_RAM_Context_Field_Xrefs.py")

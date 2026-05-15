@@ -1,19 +1,23 @@
-# N64Recomp patches config — copied from upstream MM root patches.toml:
-#   https://raw.githubusercontent.com/Mr-Wiseguy/Zelda64Recomp/master/patches.toml
+# N64Recomp patches config — template for AFA **PatchesLib** (`./N64Recomp.exe patches.toml` from engine root).
+# Upstream MM reference: https://raw.githubusercontent.com/Mr-Wiseguy/Zelda64Recomp/master/patches.toml
 #
 # For AFA: replace elf_path, func_reference_syms_file, and data_reference_syms_files with paths that
 # match your AFA patches.elf build and splat/Zelda64RecompSyms outputs for Aero Fighters Assault.
+# The mm.us.rev1.* entries below are **Majora's Mask placeholders only** — do not use for AFA retail.
+#
+# After a real AFA patches.elf + syms exist, copy this file to lib/Zelda64Recomp/patches.toml and run
+# N64Recomp from the engine root. Then configure with AEROASSAULT64_AFA_RETAIL_PIPELINES (see AFA_PORT.md §2).
 
 [input]
 elf_path = "patches/patches.elf"
 output_func_path = "RecompiledPatches"
 single_file_output = true
 use_absolute_symbols = true
-func_reference_syms_file = "Zelda64RecompSyms/mm.us.rev1.syms.toml"
+func_reference_syms_file = "Zelda64RecompSyms/afa.n64.us.syms.toml"
 data_reference_syms_files = [
-  "Zelda64RecompSyms/mm.us.rev1.datasyms.toml",
-  "Zelda64RecompSyms/mm.us.rev1.datasyms_static.toml",
-  "patches/custom_syms.toml",
+  "Zelda64RecompSyms/afa.n64.us.datasyms.toml",
+  "Zelda64RecompSyms/afa.n64.us.datasyms_static.toml",
+  "patches/custom_syms_afa.toml",
 ]
 output_binary_path = "patches/patches.bin"
 unpaired_lo16_warnings = false

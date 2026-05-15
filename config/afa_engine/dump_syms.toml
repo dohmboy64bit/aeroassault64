@@ -1,0 +1,12 @@
+# N64Recomp — dump function/data symbol TOMLs from the AFA smoke ELF.
+# Run from repo root: tools/N64Recomp.exe config/afa_engine/dump_syms.toml --dump-context
+# Install output with: pwsh tools/phase6_afa_generate_syms.ps1
+#
+# Prereq: build/aerofighters_assault.elf (WSL: make strict-verify). Entry matches
+# config/symbol_addrs.txt entrypoint and config/aerofighters_assault.n64recomp.toml.
+
+[input]
+entrypoint = 0x80200050
+elf_path = "../../build/aerofighters_assault.elf"
+output_func_path = "../../build/afa_syms_dump_scratch"
+use_absolute_symbols = true

@@ -85,6 +85,14 @@ try {
         }
     }
     Write-Host 'RSP outputs OK: rsp/aspMain.cpp, rsp/njpgdspMain.cpp'
+    $patchPy = Join-Path $RepoRoot 'tools\rsprecomp_patch_rsp_cpp.py'
+    if (Test-Path -LiteralPath $patchPy) {
+        Write-Host 'Patching rsp/*.cpp for MSVC (missing labels, addiu $zero)...'
+        & python $patchPy
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "rsprecomp_patch_rsp_cpp.py failed (exit $LASTEXITCODE)"
+        }
+    }
 }
 finally {
     Pop-Location

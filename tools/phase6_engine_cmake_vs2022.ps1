@@ -10,6 +10,7 @@
 # No-MM:   python3 tools/phase6_materialize_no_mm_engine_files.py  then  -NoMmRom
 # AFA product: stub PatchesLib/RSP without MM patches pipeline — same materialize then -AfaProduct (see lib/Zelda64Recomp/CMakeLists.txt).
 # With -AfaProduct -AfaRetailPipelines: real patches.elf + patches.toml PatchesLib (see lib/Zelda64Recomp/AFA_PORT.md).
+# With -AfaProduct -AfaRspForceStubs: link RSP stubs even if rsp/*.cpp exist (MSVC when RSPRecomp output not yet clean).
 # Optional fork: -AfaRomXxh3Hex <16 hex digits> and/or -ExeOutputName AeroAssault64 (see lib/Zelda64Recomp/CMakeLists.txt).
 # CI parity: -CiStub runs tools/phase6_ci_ensure_recompiledfuncs_stub.ps1 when RecompiledFuncs has no .c (same as .github/workflows/engine-windows.yml).
 param(
@@ -22,6 +23,7 @@ param(
     [switch]$CiStub,
     [switch]$AfaProduct,
     [switch]$AfaRetailPipelines,
+    [switch]$AfaRspForceStubs,
     [string]$AfaRomXxh3Hex = '',
     [string]$ExeOutputName = '',
     [string]$VersionTag = '',
@@ -52,6 +54,9 @@ if ($AfaRetailPipelines) {
         Write-Warning '-AfaRetailPipelines is intended with -AfaProduct; forwarding -DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON anyway (engine may warn).'
     }
     $NoMmArgs += '-DAEROASSAULT64_AFA_RETAIL_PIPELINES=ON'
+}
+if ($AfaRspForceStubs) {
+    $NoMmArgs += '-DAEROASSAULT64_AFA_RSP_FORCE_STUBS=ON'
 }
 if ($AfaRomXxh3Hex) {
     $NoMmArgs += "-DAEROASSAULT64_AFA_ROM_XXH3_HEX=$AfaRomXxh3Hex"

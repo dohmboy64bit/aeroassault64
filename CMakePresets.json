@@ -35,6 +35,18 @@
       }
     },
     {
+      "name": "engine-superbuild-vs2022-release-afa-product-rsp-stubs",
+      "displayName": "AeroAssault64 root: AFA_PRODUCT + AFA_RSP_FORCE_STUBS (VS 2022 x64)",
+      "description": "Same as engine-superbuild-vs2022-release-afa-product plus AEROASSAULT64_AFA_RSP_FORCE_STUBS for MSVC when rsp/*.cpp from RSPRecomp does not compile. See lib/Zelda64Recomp/AFA_PORT.md §1.",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build-root-vs2022-afa-product-rsp-stubs",
+      "cacheVariables": {
+        "AEROASSAULT64_AFA_PRODUCT": "ON",
+        "AEROASSAULT64_AFA_RSP_FORCE_STUBS": "ON"
+      }
+    },
+    {
       "name": "engine-superbuild-ninja-release-no-mm",
       "displayName": "AeroAssault64 root: ExternalProject with AEROASSAULT64_NO_MM_ROM (stub patches/RSP)",
       "description": "Forwards -DAEROASSAULT64_NO_MM_ROM=ON to inner Zelda64Recomp. Run python3 tools/phase6_materialize_no_mm_engine_files.py (or make phase6-materialize-stubs) before configure.",
@@ -54,6 +66,18 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "AEROASSAULT64_AFA_PRODUCT": "ON"
+      }
+    },
+    {
+      "name": "engine-superbuild-ninja-release-afa-product-rsp-stubs",
+      "displayName": "AeroAssault64 root: AFA_PRODUCT + AFA_RSP_FORCE_STUBS (Ninja Release)",
+      "description": "Same as engine-superbuild-ninja-release-afa-product plus AEROASSAULT64_AFA_RSP_FORCE_STUBS. Inner BINARY_DIR remains build-engine/. See lib/Zelda64Recomp/AFA_PORT.md §1.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-root-afa-product-rsp-stubs",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "AEROASSAULT64_AFA_PRODUCT": "ON",
+        "AEROASSAULT64_AFA_RSP_FORCE_STUBS": "ON"
       }
     },
     {
@@ -100,6 +124,12 @@
       "targets": ["zelda64recomp_engine"]
     },
     {
+      "name": "engine-superbuild-vs2022-release-afa-product-rsp-stubs",
+      "configurePreset": "engine-superbuild-vs2022-release-afa-product-rsp-stubs",
+      "configuration": "Release",
+      "targets": ["zelda64recomp_engine"]
+    },
+    {
       "name": "engine-superbuild-ninja-release-no-mm",
       "configurePreset": "engine-superbuild-ninja-release-no-mm",
       "targets": ["zelda64recomp_engine"]
@@ -107,6 +137,11 @@
     {
       "name": "engine-superbuild-ninja-release-afa-product",
       "configurePreset": "engine-superbuild-ninja-release-afa-product",
+      "targets": ["zelda64recomp_engine"]
+    },
+    {
+      "name": "engine-superbuild-ninja-release-afa-product-rsp-stubs",
+      "configurePreset": "engine-superbuild-ninja-release-afa-product-rsp-stubs",
       "targets": ["zelda64recomp_engine"]
     },
     {

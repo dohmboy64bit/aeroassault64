@@ -1,5 +1,5 @@
 # RSPRecomp template for Aero Fighters Assault (USA) — aspMain ucode.
-# DO NOT run until text_offset / text_size / text_address are filled from ROM analysis (Ghidra + splat).
+# `text_offset` / `text_size` / `text_address` below match **`roms/afa.n64.us.z64`** SHA1 in **`config/splat.yaml`** (see trailing comment block). Re-derive with **`tools/rsprecomp_*.py`** if your cart differs.
 # Schema matches upstream MM file (same keys as RSPRecomp expects):
 #   https://raw.githubusercontent.com/Mr-Wiseguy/Zelda64Recomp/master/aspMain.us.rev1.toml
 #
@@ -11,10 +11,14 @@
 # extra_indirect_branch_targets: MM lists many word offsets (see upstream aspMain.us.rev1.toml URL above).
 # AFA may need its own list from microcode analysis / RSPRecomp guidance — start with [] only if RSPRecomp accepts it.
 
-text_offset = 0x0
-text_size = 0x0
+# Derived with **`tools/rsprecomp_scan_offsets.py`** + **`tools/rsprecomp_left_edge.py`** on **`roms/afa.n64.us.z64`**:
+# first RSPRecomp-stable offset in .data after splat crash band; INVALID stderr rises after ~0x4E570
+# for a 0x1000 window. Not the MIPS hit at 0x4BE20 (**`asm/4BE20.s`** **`func_8024AE70`**).
+text_offset = 0x4DAB0
+text_size = 0x1000
 text_address = 0x04001000
 rom_file_path = "afa.n64.us.z64"
 output_file_path = "rsp/aspMain.cpp"
 output_function_name = "aspMain"
-extra_indirect_branch_targets = []
+# RSPRecomp may not emit blocks at these IMEM offsets; phase6_rsprecomp_afa.ps1 runs rsprecomp_patch_rsp_cpp.py after regen.
+extra_indirect_branch_targets = [0x888, 0xF68]
