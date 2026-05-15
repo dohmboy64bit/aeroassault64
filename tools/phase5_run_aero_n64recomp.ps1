@@ -37,6 +37,16 @@ try {
     if ($LASTEXITCODE -ne 0) {
         Write-Error "N64Recomp exited $LASTEXITCODE"
     }
+
+    $FixupPy = Join-Path $RepoRoot 'tools\afa_fixup_recompiled_vram.py'
+    if (Test-Path -LiteralPath $FixupPy) {
+        Write-Host 'afa_fixup_recompiled_vram.py (retail lui/MEM from ELF slab slips)...'
+        & python $FixupPy
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error "afa_fixup_recompiled_vram.py failed (exit $LASTEXITCODE)"
+        }
+    }
+
     Write-Host 'OK: AFA N64Recomp finished (output under RecompiledFuncs/ per TOML).'
 }
 finally {

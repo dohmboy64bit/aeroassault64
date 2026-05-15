@@ -50,6 +50,17 @@ try {
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'data_dump.toml') -Destination $OutData -Force
     Copy-Item -LiteralPath (Join-Path $RepoRoot 'data_dump.toml') -Destination $OutDataStatic -Force
     Remove-Item -LiteralPath (Join-Path $RepoRoot 'data_dump.toml') -Force -ErrorAction SilentlyContinue
+
+    $FixupPy = Join-Path $RepoRoot 'tools\afa_fixup_datasyms_vram.py'
+    if (-not (Test-Path -LiteralPath $FixupPy)) {
+        Write-Error "Missing $FixupPy"
+    }
+    Write-Host "afa_fixup_datasyms_vram.py (retail VRAM from symbol names)..."
+    & python $FixupPy $OutData $OutDataStatic
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "afa_fixup_datasyms_vram.py failed (exit $LASTEXITCODE)"
+    }
+
     $funcLines = (Get-Content -LiteralPath $OutFunc | Measure-Object -Line).Lines
     Write-Host "OK: $OutFunc ($funcLines lines)"
     Write-Host "OK: $OutData (copy also at $OutDataStatic)"
