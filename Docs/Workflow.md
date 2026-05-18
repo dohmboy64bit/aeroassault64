@@ -63,6 +63,7 @@ Complete these on your machine; check boxes as you go. **Do not invent tool vers
 
 - [Hack64 Wiki — Nintendo 64 Hacking](https://hack64.net/wiki/doku.php?id=nintendo_64)
 - [N64brew Wiki — Main page](https://n64brew.dev/wiki/Main_Page)
+- [Awesome N64 Development (n64.dev)](https://n64.dev/) — curated N64 dev/RE resource list (toolchains, docs, emulators, guides)
 
 ### Windows (host)
 

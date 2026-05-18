@@ -67,6 +67,7 @@ Use these for hardware, ABI, memory map, and toolchain context. Prefer them over
 
 - [Hack64 Wiki — Nintendo 64 Hacking](https://hack64.net/wiki/doku.php?id=nintendo_64) — microcodes, compression, MIPS/asm notes, and misc dev references.
 - [N64brew Wiki — Main page](https://n64brew.dev/wiki/Main_Page) — VR4300, RCP/RSP/RDP, memory map, libultra/libdragon notes, and community-maintained documentation.
+- [Awesome N64 Development (n64.dev)](https://n64.dev/) — curated index of toolchains, docs, emulators, example code, RE guides/disassemblers, and community links; use when hunting upstream tools or references.
 
 ## Documentation rule
 
