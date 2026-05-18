@@ -23,6 +23,11 @@ WRONG_SLAB_BASE = 0x809F9960
 WRONG_SLAB_END = 0x809FA200
 SLAB_DELTA = 0x7A82E0  # 0x809F9960 - 0x80251680 (asm D_80251774 %hi/%lo)
 
+# OS .bss in 0x80280xxx emitted as lui 0x8027 + addiu (AFA_PORT.md D_80280EB8 / func_8023169C).
+OS7_DELTA = 0xBCD0
+OS7_WRONG_LO = 0x8026E000
+OS7_WRONG_HI = 0x80276000
+
 LUI_LINE = re.compile(
     r"^(\s*ctx->r(\d+) = S32\(0X([0-9A-F]+) << 16\);)\s*(?://.*)?$"
 )
@@ -37,7 +42,7 @@ ADDIU_AFTER_LUI = re.compile(
 )
 
 
-def wrong_to_correct(addr: int) -> int | None:
+def wrong_to_correct(addr: int, hi_val: int | None = None) -> int | None:
     if WRONG_SLAB_BASE <= addr < WRONG_SLAB_END:
         return addr - SLAB_DELTA
     # entry BSS / stack (see asm/1000.s)
@@ -45,16 +50,17 @@ def wrong_to_correct(addr: int) -> int | None:
         return 0x80256D70
     if addr == 0x80276E90:
         return 0x80282B60
+    # .L80280C0C boot flag — func_8023169C (asm/31B30.s) emitted as lui 0x80A0 / lw 0x558
+    if addr == 0x80A00558:
+        return 0x80280C0C
+    if hi_val == 0x8027 and OS7_WRONG_LO <= addr < OS7_WRONG_HI:
+        return addr + OS7_DELTA
     return None
 
 
 def split_mips_addr(addr: int) -> tuple[int, int]:
-    """Return (hi16_unsigned, lo16_signed) for MIPS o32 address formation."""
-    lo = addr & 0xFFFF
-    hi = (addr >> 16) & 0xFFFF
-    if lo >= 0x8000:
-        hi = (hi + 1) & 0xFFFF
-    return hi, lo if lo < 0x8000 else lo - 0x10000
+    """Return (hi16, lo16) for lui + ADD32 as N64Recomp emits (asm %hi/%lo)."""
+    return (addr >> 16) & 0xFFFF, addr & 0xFFFF
 
 
 def fix_file(path: Path, dry_run: bool) -> int:
@@ -74,7 +80,7 @@ def fix_file(path: Path, dry_run: bool) -> int:
             if mm and mm.group(2) == reg:
                 off = int(mm.group(4), 16)
                 wrong = (hi_val << 16) + off
-                correct = wrong_to_correct(wrong)
+                correct = wrong_to_correct(wrong, hi_val)
                 if correct is None:
                     break
                 new_hi, new_lo = split_mips_addr(correct)
@@ -90,7 +96,7 @@ def fix_file(path: Path, dry_run: bool) -> int:
             if mm and mm.group(2) == reg and mm.group(5) == reg:
                 off = int(mm.group(4), 16)
                 wrong = (hi_val << 16) + off
-                correct = wrong_to_correct(wrong)
+                correct = wrong_to_correct(wrong, hi_val)
                 if correct is None:
                     break
                 new_hi, new_lo = split_mips_addr(correct)
@@ -106,7 +112,7 @@ def fix_file(path: Path, dry_run: bool) -> int:
             if am and am.group(2) == reg:
                 off = int(am.group(3), 16)
                 wrong = (hi_val << 16) + off
-                correct = wrong_to_correct(wrong)
+                correct = wrong_to_correct(wrong, hi_val)
                 if correct is None:
                     break
                 new_hi, new_lo = split_mips_addr(correct)
